@@ -60,6 +60,9 @@
 - [x] Default+pitch listo (default=cabeaa0 · pitch=pitch_5min.md)
 - [x] Feedback ronda 2 (b5b377b): X_T11↔OUT (no X_M02), WH_MP_5→X_R25 solo, WH_PT_3→X_M05, y **muros VISIBLES** (bug "los muros no existen aun") — capa `walls` en realistic.json + render negro en PlantMap, sin cruzar aristas. pytest 76/76, tsc EXIT 0.
 - [x] Feedback ronda 2.1 (c20a8af): B10/B20 + muros físicos + borde externo (detalle abajo).
+- [x] Feedback ronda 2.2 (99e6be8 + b99d92e): **quitar B10/B20** (error: eran X_R10/X_R20) → X_T16→X_R10, X_T17→X_R20; **W1 corregido al OESTE de OUT** (472,64,8,240) — la x609 al este era errónea (lectura de archivo equivocado cuando falló la visión). Póster y anotación confirman: sin pared este. Layout final 75/92/6, pytest 79/79.
+
+- [x] **Ronda 2.2 (corrección conceptos) — cerrado (commits `99e6be8` + `b99d92e`, 4-sep):** el usuario aclaró que **no eran B10/B20 sino X_R10/X_R20** (docks reales del layout) → se eliminaron los nodos almacén B10/B20 y se conectó **X_T16→X_R10** y **X_T17→X_R20**. Además corrigió la pared: **W1 va al OESTE de OUT** (x=472, cara oeste, entre W2=440 y OUT=480), **no al este** (x609 estaba mal: lo puse yo leyendo el archivo equivocado). El póster `realistic_presentacion.jpg` (que el usuario volvió a enviar idéntico) muestra **solo dos trazos verticales de pared al oeste** — no hay pared este. Estado final: **75 nodos / 92 aristas / 6 muros** (W1, W2, W_TOP/BOTTOM/LEFT/RIGHT), conexo 75/75, grafo sin cruces, pytest 79/79, en vivo `/api/v1/layout?plant=realistic` = 75/92/6.
 
 **Feedback ronda 2.1 — cerrado (commit `c20a8af`, 4-sep)**
 - Nodos nuevos de almacén **B10**(760,470) ↔ `X_T16` y **B20**(800,470) ↔ `X_T17` (zona de docks, como indicó el usuario con la imagen).
@@ -70,4 +73,4 @@
 - Test guard `test_walls.py`: ninguna pared cruza una arista del grafo; conteo de nodos dinámico (`len(layout["nodes"])`, no hardcode). **pytest 79/79**, `npx tsc --noEmit` EXIT 0, ciclo de misiones vivo (SUPPLY/PICKUP_PT/RELOCATION) con el stack rebuild.
 
 ## Check-puntos pendientes / posibles ajustes (demo day)
-- [ ] Si el usuario reenvía el layout original ("te lo vuelvo a pasar?") → alinear con precisión las **paredes externas del borde** (por ahora W_TOP/BOTTOM/LEFT/RIGHT = perímetro de la imagen 1000×600) y afinar posición de W1 (609,57,8,364) / W2 (440,70,8,230). Validar de nuevo 0 cruces con `test_walls.py` antes de commit.
+- [ ] Si el usuario reenvía el layout original ("te lo vuelvo a pasar?") → alinear con precisión las **paredes externas del borde** (por ahora W_TOP/BOTTOM/LEFT/RIGHT = perímetro de la imagen 1000×600) y afinar posición de W1 (472,64,8,240, oeste) / W2 (440,70,8,230) según la lectura calibrada de visión del póster (Cursor, en curso). Validar de nuevo 0 cruces con `test_walls.py` antes de commit.
