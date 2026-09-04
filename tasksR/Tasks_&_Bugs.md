@@ -53,3 +53,9 @@
   - **AMR_06** "AMR 6" (tipo pallet_lifter, home MURO_ENTREGA, `entrega_exclusiva:true`): fuera del pool Húngaro y de RELOCATION (queda reserve para EXPORT; RECHARGE se asigna directo). Vive IDLE en el muro hasta que hay stock.
   - **Frontend**: PlantMap dibuja 📦 sobre OUTs con stock + aristas `entrega` en rosa; `out_stock` en snapshot/types/Dashboard; amrCargo EXPORT=🚛 verde; demoEngine `out_stock:{}`. Dashboard pasa `outStock={snapshot?.out_stock}`.
   - Validado: pytest **83/83**, tsc 0, E2E live (stock OUT:2 en sim 239 → AMR_06 MOVING_TO_PICKUP EXPORT en sim 240), layout live 81/99/6, AMR_06 IDLE en muro. Imágenes de referencia versionadas: `image-3_ruta_pink.png`, `image-4_topologia_delivery.png`.
+- [x] **Feedback ronda 2.6 — OUT_3/OUT_4 a la derecha de OUT/OUT_2 (grid 2×2)** — ✅ HECHO (commit `01b0da6`, usuaria pidió delegar a Deep).
+  - **Pedido usuario:** "Pide a Deep que suba OUT3 y OUT4 a la derecha de OUT y OUT2".
+  - **Ejecutado por Deep** (01a06d83): OUT_3 (530,380)→**(620,200)**, OUT_4 (530,470)→**(620,290)**; borrados **P_OUT1/P_OUT2** (quedaban huérfanos); aristas nuevas `OUT↔OUT_3` y `OUT_2↔OUT_4` (entrega:true→rosa); zona "OUT (medio)" ampliada a w160×h210 (x480) envolviendo la grid.
+  - **Layout final:** OUT(530,200) / OUT_3(620,200) · OUT_2(530,290) / OUT_4(620,290) → **79 nodos / 98 aristas / 6 muros**, conexo, 0 aristas descartadas por muros. A* de los 4 OUT→MURO_ENTREGA OK.
+  - **Validación:** pytest 83/83; en vivo (900 ticks): 10 SUPPLY+9 PICKUP+9 EXPEDITION+5 EXPORT completadas, los 4 OUTs usados (stock max 2/2/1/1), EXPORT→MURO_ENTREGA siempre, AMR_06 IDLE en muro.
+  - **Cursor (visión, verificación secundaria):** calibración image-3 confirma corredor vertical x≈549→pared SUR (y≈592), delta +19u vs columna x=530 (dentro de rango), MURO_ENTREGA pegado al sur (-16u). Su propuesta de quad descendida ante la orden explícita del usuario. Sin cambios de layout.
