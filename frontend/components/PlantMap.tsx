@@ -218,6 +218,9 @@ export function PlantMap({
     // Mapa denso (p.ej. Huge: 520 nodos / 459 cruces / 57 zonas) → modo compacto:
     // cruces y slots de rack sin etiqueta, aristas finas, solo nodos clave rotulados.
     const dense = layout.nodes.length >= 150;
+    // En mapas densos los sprites (AMRs/peatones) a tamaño completo tapan los pasillos:
+    // se encogen con el mismo factor que nodos/aristas para que encajen con el mapa.
+    const spriteK = dense ? 0.45 : 1;
 
     // Capas de fondo (zonas) — impermeable si ausente/vacío
     const zones = layout.zones;
@@ -465,20 +468,20 @@ export function PlantMap({
       .filter((o) => o.tipo === "OPERATOR")
       .forEach((p) => {
         const s = toScreen(p.x, p.y);
-        const rad = p.radius * 4 * scale;
+        const rad = p.radius * 4 * spriteK * scale;
         ctx.beginPath();
         ctx.arc(s.x, s.y, rad, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(219, 110, 40, 0.15)";
         ctx.fill();
         ctx.strokeStyle = "rgba(219, 110, 40, 0.5)";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.5 * spriteK;
         ctx.stroke();
         ctx.fillStyle = "#db6d28";
         ctx.beginPath();
-        ctx.arc(s.x, s.y, 8 * scale, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, 8 * spriteK * scale, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = "#fff";
-        ctx.font = `${8 * scale}px sans-serif`;
+        ctx.font = `${8 * spriteK * scale}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("🚶", s.x, s.y);
@@ -502,7 +505,7 @@ export function PlantMap({
 
         ctx.save();
         ctx.strokeStyle = routeColor;
-        ctx.lineWidth = 2 * scale;
+        ctx.lineWidth = 2 * spriteK * scale;
         ctx.globalAlpha = 0.55;
         ctx.setLineDash([8, 6]);
         ctx.lineDashOffset = -dashOffset;
@@ -530,38 +533,38 @@ export function PlantMap({
         const { cargoEmoji } = resolveAmrCargoVisual(amr, layout, missionById);
 
         ctx.beginPath();
-        ctx.arc(s.x, s.y, 16 * scale, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, 16 * spriteK * scale, 0, Math.PI * 2);
         ctx.strokeStyle = ring;
-        ctx.lineWidth = 3 * scale;
+        ctx.lineWidth = 3 * spriteK * scale;
         ctx.stroke();
 
         ctx.fillStyle = getAmrColor(i);
-        const w = 20 * scale;
-        const h = 16 * scale;
+        const w = 20 * spriteK * scale;
+        const h = 16 * spriteK * scale;
         ctx.beginPath();
-        ctx.roundRect(s.x - w / 2, s.y - h / 2, w, h, 4 * scale);
+        ctx.roundRect(s.x - w / 2, s.y - h / 2, w, h, 4 * spriteK * scale);
         ctx.fill();
 
         ctx.fillStyle = "#1a1a2e";
-        ctx.font = `bold ${8 * scale}px sans-serif`;
+        ctx.font = `bold ${8 * spriteK * scale}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "alphabetic";
-        ctx.fillText(amr.nombre.split(" ")[0], s.x, s.y - 22 * scale);
+        ctx.fillText(amr.nombre.split(" ")[0], s.x, s.y - 22 * spriteK * scale);
 
-        ctx.font = `${11 * scale}px sans-serif`;
+        ctx.font = `${11 * spriteK * scale}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(`${cargoEmoji} ${getBatteryEmoji(amr)}`, s.x, s.y - 30 * scale);
+        ctx.fillText(`${cargoEmoji} ${getBatteryEmoji(amr)}`, s.x, s.y - 30 * spriteK * scale);
 
-        const bw = 24 * scale;
+        const bw = 24 * spriteK * scale;
         ctx.fillStyle = "#30363d";
-        ctx.fillRect(s.x - bw / 2, s.y + 12 * scale, bw, 4 * scale);
+        ctx.fillRect(s.x - bw / 2, s.y + 12 * spriteK * scale, bw, 4 * spriteK * scale);
         ctx.fillStyle = amr.bateria > 30 ? "#3fb950" : "#f85149";
         ctx.fillRect(
           s.x - bw / 2,
-          s.y + 12 * scale,
+          s.y + 12 * spriteK * scale,
           bw * (amr.bateria / 100),
-          4 * scale
+          4 * spriteK * scale
         );
       } catch {
         // Saltar AMR problemático; el resto sigue visible
