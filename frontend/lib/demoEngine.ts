@@ -87,18 +87,78 @@ export class DemoEngine {
   }
 
   private initRoutes() {
-    this.routes = {
-      amr1: ["L1_OUT", "X_01", "X_02", "X_03", "WH_PT_1", "WH_PT_2", "X_06", "X_05", "X_04", "L2_OUT"],
-      amr2: ["E1_IN", "X_07", "X_08", "X_05", "X_02", "X_03", "WH_MP_1"],
-      amr3: ["L2_OUT", "X_04", "X_05", "X_06", "WH_PT_2", "X_06", "X_09", "X_08", "X_07", "E1_IN"],
-      amr4: ["E2_IN", "X_10", "X_07", "X_04", "X_01", "L1_OUT", "X_01", "X_02", "X_05", "X_08", "CHARGER_1"],
-    };
-    this.altRoutes = {
-      amr1: ["L1_OUT", "X_01", "X_04", "X_07", "X_08", "X_09", "X_06", "WH_PT_2"],
-      amr2: ["E1_IN", "X_07", "X_04", "X_01", "X_02", "X_03", "WH_MP_1"],
-      amr3: ["L2_OUT", "X_04", "X_07", "X_08", "X_09", "X_06", "WH_PT_2"],
-      amr4: ["E2_IN", "X_10", "X_11", "X_12", "WH_MP_2", "CHARGER_2"],
-    };
+    // Rutas CALCULADAS con el grafo real del layout (nodos + aristas, BFS), en lugar de
+    // nodos hardcodeados del mapa clásico. Los extremos semánticos existen en quito Y realistic,
+    // así el modo offline funciona en cualquier planta. Si falta algún extremo o no hay
+    // conexión, findPath devuelve [a, b] y la simulación sigue viva.
+    const prim: Array<[string, string]> = [
+      ["L1_OUT", "L2_OUT"], // amr1: bodega PT → línea 2
+      ["E1_IN", "WH_MP_1"], // amr2: insumos → Savoy
+      ["L2_OUT", "E1_IN"], // amr3: PT línea 2 → insumos
+      ["E2_IN", "CHARGER_1"], // amr4: reserva + ruta al cargador
+    ];
+    const alt: Array<[string, string]> = [
+      ["L1_OUT", "WH_PT_2"],
+      ["E1_IN", "WH_PT_1"],
+      ["L2_OUT", "WH_PT_2"],
+      ["E2_IN", "CHARGER_2"],
+    ];
+    const keys: Array<keyof typeof this.routes> = ["amr1", "amr2", "amr3", "amr4"];
+    const rr: typeof this.routes = {};
+    const ar: typeof this.routes = {};
+    keys.forEach((k, i) => {
+      rr[k] = this.findPath(prim[i][0], prim[i][1]);
+      ar[k] = this.findPath(alt[i][0], alt[i][1]);
+    });
+    this.routes = rr;
+    this.altRoutes = ar;
+  }
+
+  private adjacency?: Map<string, string[]>;
+
+  private buildAdjacency(): Map<string, string[]> {
+    const adj = new Map<string, string[]>();
+    for (const e of this.layout.edges) {
+      const a = e.from;
+      const b = e.to;
+      if (typeof a !== "string" || typeof b !== "string") continue;
+      if (!adj.has(a)) adj.set(a, []);
+      if (!adj.has(b)) adj.set(b, []);
+      adj.get(a)!.push(b);
+      adj.get(b)!.push(a);
+    }
+    return adj;
+  }
+
+  /** BFS por las aristas del layout: ruta válida entre dos nodos (o [a,b] si no hay conexión). */
+  private findPath(a: string, b: string): string[] {
+    if (a === b) return [a];
+    this.adjacency = this.adjacency ?? this.buildAdjacency();
+    if (!this.adjacency.has(a) || !this.adjacency.has(b)) return [a, b];
+    const prev = new Map<string, string | null>();
+    const seen = new Set<string>([a]);
+    const queue = [a];
+    prev.set(a, null);
+    while (queue.length) {
+      const cur = queue.shift()!;
+      if (cur === b) {
+        const path: string[] = [];
+        let n: string | null = b;
+        while (n) {
+          path.unshift(n);
+          n = prev.get(n) ?? null;
+        }
+        return path;
+      }
+      for (const nb of this.adjacency.get(cur)!) {
+        if (!seen.has(nb)) {
+          seen.add(nb);
+          prev.set(nb, cur);
+          queue.push(nb);
+        }
+      }
+    }
+    return [a, b];
   }
 
   private initAmrs() {
@@ -363,7 +423,7 @@ export class DemoEngine {
     this.missions.unshift({
       id: missionId,
       tipo: "RECHARGE",
-      origen: sim.path[0] ?? "X_02",
+      origen: sim.path.length ? sim.path[0] : charger,
       destino: charger,
       prioridad: 8,
       estado: "en_curso",
@@ -398,8 +458,9 @@ export class DemoEngine {
       if (segment.length) return segment;
     }
 
-    if (targetId === "CHARGER_1") return ["X_02", "CHARGER_1"];
-    if (targetId === "CHARGER_2") return ["X_03", "CHARGER_2"];
+    // Fallback seguro (cualquier planta): enlace directo nodo actual → objetivo
+    const targetNode = this.layout.nodes.find((n) => n.id === targetId);
+    if (fromNode && targetNode) return [fromNode, targetId];
     return [targetId];
   }
 
@@ -425,8 +486,17 @@ export class DemoEngine {
   }
 
   private activeRoute(sim: AmrSim): string[] {
-    if (this.blocked.has("X_02-X_05")) return this.altRoutes[sim.routeKey] ?? sim.path;
-    return this.routes[sim.routeKey];
+    const primary = this.routes[sim.routeKey];
+    // Si algún tramo del recorrido primario está bloqueado → alternativo (funciona en
+    // cualquier planta y para cualquier arista bloqueada, no solo el par hardcodeado del mapa clásico).
+    if (primary) {
+      for (let i = 0; i < primary.length - 1; i++) {
+        if (this.isBlocked(primary[i], primary[i + 1])) {
+          return this.altRoutes[sim.routeKey] ?? primary;
+        }
+      }
+    }
+    return primary ?? sim.path;
   }
 
   private isBlocked(from: string, to: string) {

@@ -17,7 +17,14 @@ export const WS_URL =
 
 export const BACKEND_TIMEOUT_MS = 3000;
 
-export const LAYOUT_FALLBACK_PATH = "/maps/plant_layout.json";
+/**
+ * Fallbacks locales por planta (modo offline/estático; mismo esquema que el backend).
+ * realistic_layout.json se genera desde la respuesta real de /api/v1/layout?plant=realistic.
+ */
+export const LAYOUT_FALLBACK_PATHS: Record<string, string> = {
+  quito: "/maps/plant_layout.json",
+  realistic: "/maps/realistic_layout.json",
+};
 
 export const DEFAULT_PLANT_ID = "realistic";
 export const DEFAULT_PLANT_NAME = "Planta Realistic";

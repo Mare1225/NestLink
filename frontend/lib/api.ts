@@ -3,7 +3,7 @@ import {
   BACKEND_TIMEOUT_MS,
   DEFAULT_PLANT_ID,
   DEFAULT_PLANT_NAME,
-  LAYOUT_FALLBACK_PATH,
+  LAYOUT_FALLBACK_PATHS,
 } from "./config";
 import type { Mission, PlantInfo, PlantLayout, SimulationSnapshot } from "./types";
 
@@ -45,11 +45,12 @@ export async function fetchLayout(plantId?: string): Promise<PlantLayout> {
     // caer al fallback local solo para planta default
   }
 
-  // 2) Fallback local — solo aplica a la planta clásica Quito
-  //    (/maps/plant_layout.json es el mapa de Quito; realistic solo existe via backend)
-  if (plant === "quito") {
+  // 2) Fallback local (modo offline/estático) — hay un archivo por planta en /public/maps/
+  //    (quito y realistic; mismo esquema que responde el backend).
+  const fallbackPath = LAYOUT_FALLBACK_PATHS[plant];
+  if (fallbackPath) {
     try {
-      const local = await fetchWithTimeout(LAYOUT_FALLBACK_PATH, {}, 3000);
+      const local = await fetchWithTimeout(fallbackPath, {}, 3000);
       if (local.ok) return (await local.json()) as PlantLayout;
     } catch {
       // caer al modo sin mapa
