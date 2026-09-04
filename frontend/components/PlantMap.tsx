@@ -706,7 +706,8 @@ export function PlantMap({
         ctx.font = `bold ${8 * spriteK * scale}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "alphabetic";
-        ctx.fillText(amr.nombre.split(" ")[0], s.x, s.y - 22 * spriteK * scale);
+        const amrLabel = amr.nombre.startsWith("AMR ") ? amr.nombre : amr.nombre.split(" ")[0];
+        ctx.fillText(amrLabel, s.x, s.y - 22 * spriteK * scale);
 
         ctx.font = `${11 * spriteK * scale}px sans-serif`;
         ctx.textAlign = "center";
