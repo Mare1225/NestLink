@@ -29,6 +29,11 @@ export function KpiMiniPanel({ kpis }: KpiMiniPanelProps) {
       accent: "text-nest-text",
     },
     {
+      label: "OUT (prom.)",
+      value: `${kpis.tiempo_medio_en_out_min.toFixed(1)}m`,
+      accent: "text-violet-700",
+    },
+    {
       label: "km evit.",
       value: kpis.km_evitados.toFixed(1),
       accent: "text-[#c40026]",

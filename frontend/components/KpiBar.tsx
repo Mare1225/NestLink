@@ -29,6 +29,11 @@ export function KpiBar({ kpis }: KpiBarProps) {
       accent: "text-nest-text",
     },
     {
+      label: "En OUT (prom.)",
+      value: `${kpis.tiempo_medio_en_out_min.toFixed(1)} min`,
+      accent: "text-violet-700",
+    },
+    {
       label: "ROI distancia",
       value: `−${kpis.roi_km_pct}% km`,
       accent: "text-emerald-700",

@@ -62,6 +62,9 @@ class SimulationEnvironment:
         # Estado/sincronización: out_stock = paquetes EN el buffer (🟡 emoji 📦);
         # out_en_ruta = EXPORTs ya PROGRAMADAS (máx 1 extra sobre stock, encadena en out_ship).
         self.out_en_ruta: Dict[str, int] = {out: 0 for out in self.out_nodes}
+        # KPI "tiempo en OUT": cola FIFO de instantes de arribo de paquetes por OUT (para medir
+        # cuánto espera cada paquete en el buffer antes de la entrega exclusiva al muro).
+        self._out_pkg_arrivals: Dict[str, List[float]] = {out: [] for out in self.out_nodes}
         self.delivery_amr_id: Optional[str] = None
 
         self.metrics = KPIManager()
@@ -420,6 +423,11 @@ class SimulationEnvironment:
             return None
 
         if target_amr.tarea_actual:
+            # Si el AMR exclusivo interrumpe un EXPORT en vuelo (fue a recargar), NO puede
+            # dejar el OUT atrapado: se revierte el estado (paquete al buffer / slot liberado)
+            # y se reprograma para que la entrega sí ocurra cuando vuelva.
+            if target_amr.tarea_actual.tipo == "EXPORT":
+                self.abort_export(target_amr.tarea_actual)
             target_amr.tarea_actual.estado = "completada"
 
         recharge_mission = self.mission_queue.add_mission(
@@ -491,21 +499,60 @@ class SimulationEnvironment:
         if out_id not in self.out_stock or not self.wall_node:
             return
         self.out_stock[out_id] += 1
-        if self.out_en_ruta.get(out_id, 0) == 0 and self.delivery_amr_id:
-            self.mission_queue.add_mission(
-                tipo="EXPORT",
-                origen=out_id,
-                destino=self.wall_node,
-                prioridad=7,
-                peso_kg=480.0,
-                sim_time=sim_time
-            )
-            self.out_en_ruta[out_id] += 1
-            self.add_notice("INFO", None, f"📦 Paquete terminado en {out_id} esperando recolección para muro externo")
+        # KPI: registrar instante de arribo del paquete al buffer OUT (se cierra en out_ship)
+        self._out_pkg_arrivals[out_id].append(sim_time)
+        self._provision_export(out_id, sim_time=sim_time)
+
+    def _provision_export(self, out_id: str, sim_time: Optional[float] = None) -> bool:
+        """Point único de creación de misiones EXPORT: provisiona UNA EXPORT hacia el muro externo
+        SOLO si hay stock esperando en el OUT y no hay otra ya programada (out_en_ruta==0).
+        Devuelve True si creó una misión. Lo usan out_arrive, out_ship y abort_export."""
+        if out_id not in self.out_stock or not self.wall_node or not self.delivery_amr_id:
+            return False
+        if self.out_en_ruta.get(out_id, 0) > 0:
+            return False
+        if self.out_stock[out_id] <= 0:
+            return False
+        st = self.sim_time if sim_time is None else sim_time
+        self.mission_queue.add_mission(
+            tipo="EXPORT",
+            origen=out_id,
+            destino=self.wall_node,
+            prioridad=7,
+            peso_kg=480.0,
+            sim_time=st
+        )
+        self.out_en_ruta[out_id] += 1
+        self.add_notice("INFO", None, f"📦 Paquete en {out_id} esperando recolección del AMR exclusivo (muro externo)")
+        return True
+
+    def abort_export(self, mission) -> None:
+        """El AMR exclusive interrumpe un EXPORT en vuelo (p.ej. fue a recargar batería).
+        Revierte el estado OUT para que ningún paquete quede atrapado para siempre:
+        - Si aún no había recogido ('asignada'), el paquete sigue en el buffer → solo se libera
+          el slot (en_ruta−1) y se reprograma si hay stock.
+        - Si ya lo llevaba en vuelo ('en_curso'), vuelve a poner el paquete en el buffer (stock+1),
+          registra de nuevo su arribo (el reloj de espera se reinicia) y reprograma la EXPORT."""
+        out = getattr(mission, "origen", None)
+        if out not in self.out_stock:
+            return
+        picked_up = getattr(mission, "estado", None) == "en_curso"
+        if picked_up:
+            self.out_stock[out] += 1
+            self._out_pkg_arrivals[out].append(self.sim_time)
+        if self.out_en_ruta.get(out, 0) > 0:
+            self.out_en_ruta[out] = max(0, self.out_en_ruta[out] - 1)
+        self._provision_export(out)
+        self.add_notice(
+            "WARNING", None,
+            (f"EXPORT interrumpida: AMR exclusivo fue a recargar → paquete de {out} devuelto al buffer"
+             if picked_up else f"EXPORT interrumpida: AMR exclusivo fue a recargar → {out} reprogramado")
+        )
 
     def out_pickup(self, out_id: str, amr_name: str = "") -> None:
         """El AMR exclusivo recoge del OUT: el paquete sale del buffer (stock−1, emoji se apaga)
-        y viaja al muro en vuelo. out_en_ruta NO cambia: esa misión sigue contando hasta entregar."""
+        y viaja al muro en vuelo. out_en_ruta NO cambia: esa misión sigue contando hasta entregar.
+        El instante de arribo queda en la cola FIFO y se cierra (tiempo de espera) en out_ship."""
         if out_id not in self.out_stock:
             return
         self.out_stock[out_id] = max(0, self.out_stock[out_id] - 1)
@@ -514,24 +561,19 @@ class SimulationEnvironment:
 
     def out_ship(self, out_id: str, amr_name: str = "") -> None:
         """El AMR exclusivo entrega en el muro (pared externa): la misión EXPORT deja de contar
-        (en_ruta−1). Si aún queda stock esperando en ese OUT, encadena la siguiente EXPORT —
-        con contador explícito no hay guard falso (en curso ya no aparece como pendiente)."""
+        (en_ruta−1). Cierra el KPI de espera del paquete (arribo→entrega). Si aún queda stock
+        esperando en ese OUT, encadena la siguiente EXPORT — con contador explícito no hay guard
+        falso (en curso ya no aparece como pendiente)."""
         if out_id not in self.out_stock:
             return
         self.out_en_ruta[out_id] = max(0, self.out_en_ruta.get(out_id, 0) - 1)
+        # KPI: tiempo de espera del paquete en OUT = instante de entrega (ahora) − instante de arribo
+        arrivals_q = self._out_pkg_arrivals.get(out_id)
+        if arrivals_q:
+            t0 = arrivals_q.pop(0)
+            self.metrics.record_out_wait_sec(max(0.0, self.sim_time - t0))
         self.add_notice("INFO", None, f"🚚 {amr_name or 'AMR'} entregó paquete de {out_id} en {self.wall_node} (pared externa, embarque)")
-        if self.out_stock[out_id] > 0 and self.wall_node and self.delivery_amr_id:
-            if self.out_en_ruta.get(out_id, 0) == 0:
-                self.mission_queue.add_mission(
-                    tipo="EXPORT",
-                    origen=out_id,
-                    destino=self.wall_node,
-                    prioridad=7,
-                    peso_kg=480.0,
-                    sim_time=self.sim_time
-                )
-                self.out_en_ruta[out_id] += 1
-                self.add_notice("INFO", None, f"📦 Paquete adicional en {out_id} esperando recolección")
+        self._provision_export(out_id)
 
     def reset_missions(self) -> Dict[str, Any]:
         cleared_count = len(self.mission_queue.missions)

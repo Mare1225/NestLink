@@ -26,6 +26,7 @@ const EMPTY_KPIS: KPIsState = {
   tiempo_medio_entrega_min: 0,
   km_evitados: 0,
   roi_km_pct: 0,
+  tiempo_medio_en_out_min: 0,
 };
 
 export function Dashboard() {

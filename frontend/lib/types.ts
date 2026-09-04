@@ -53,6 +53,8 @@ export interface KPIsState {
   tiempo_medio_entrega_min: number;
   km_evitados: number;
   roi_km_pct: number;
+  /** Tiempo medio (min) que un paquete espera en un OUT antes de ser entregado al muro */
+  tiempo_medio_en_out_min: number;
 }
 
 /** Notice/banner del backend (ej. "⚡ PICO DE DEMANDA", derrames) */

@@ -74,6 +74,7 @@ class KPIsState(BaseModel):
     tiempo_medio_entrega_min: float = 0.0
     km_evitados: float = 0.0
     roi_km_pct: float = 0.0
+    tiempo_medio_en_out_min: float = 0.0
 
 class SimulationSnapshot(BaseModel):
     sim_time: float

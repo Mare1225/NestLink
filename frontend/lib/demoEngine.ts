@@ -48,6 +48,7 @@ export class DemoEngine {
     tiempo_medio_entrega_min: 4.2,
     km_evitados: 4.8,
     roi_km_pct: 22,
+    tiempo_medio_en_out_min: 1.8,
   };
 
   private routes: Record<string, string[]> = {};
