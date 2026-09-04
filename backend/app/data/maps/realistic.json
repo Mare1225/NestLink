@@ -90,20 +90,6 @@
       "label": "WH_PT_2"
     },
     {
-      "id": "B10",
-      "x": 760,
-      "y": 470,
-      "type": "almacen",
-      "label": "B10"
-    },
-    {
-      "id": "B20",
-      "x": 800,
-      "y": 470,
-      "type": "almacen",
-      "label": "B20"
-    },
-    {
       "id": "WH_PT_3",
       "x": 400,
       "y": 300,
@@ -1260,7 +1246,7 @@
     },
     {
       "from": "X_T16",
-      "to": "B10",
+      "to": "X_R10",
       "length": 12,
       "max_speed": 1.5,
       "direction": "bi",
@@ -1268,7 +1254,7 @@
     },
     {
       "from": "X_T17",
-      "to": "B20",
+      "to": "X_R20",
       "length": 12,
       "max_speed": 1.5,
       "direction": "bi",
