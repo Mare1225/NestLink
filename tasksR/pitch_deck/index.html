@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NestLink · Pitch Hackathon InnoLabs Nestlé</title>
+<style>
+  :root{
+    --red:#C8102E;
+    --red-dark:#9E0C24;
+    --red-soft:#FCE8EC;
+    --ink:#1F1F1F;
+    --ink-soft:#4A4A4A;
+    --muted:#8A8A8A;
+    --line:#E6E6E6;
+    --bg:#FFFFFF;
+    --bg-alt:#F6F6F8;
+    --amber:#E8A33D;
+    --green:#1E8A5A;
+    --blue:#1F6FB2;
+    --radius:14px;
+    --shadow:0 10px 30px rgba(31,31,31,.08);
+    --font:"Helvetica Neue",Helvetica,Arial,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:#2b2b2f;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Progress + chrome ---------- */
+  #progress{
+    position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--red),var(--amber));
+    z-index:60;transition:width .3s ease;
+  }
+  #counter{
+    position:fixed;right:18px;bottom:14px;z-index:55;
+    font-size:13px;color:#fff;background:rgba(0,0,0,.55);
+    padding:5px 11px;border-radius:999px;letter-spacing:.4px;
+    font-variant-numeric:tabular-nums;
+  }
+  .nav-arrow{
+    position:fixed;top:50%;transform:translateY(-50%);z-index:55;
+    width:46px;height:46px;border-radius:50%;
+    background:rgba(255,255,255,.14);color:#fff;border:none;
+    font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:background .15s;
+  }
+  .nav-arrow:hover{background:rgba(200,16,46,.85)}
+  #prev{left:16px}
+  #next{right:16px}
+
+  /* ---------- Slide base ---------- */
+  .slide{
+    position:fixed;inset:0;display:none;background:var(--bg);
+    padding:56px 64px 40px;overflow:auto;
+    flex-direction:column;
+  }
+  .slide.active{display:flex;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ---------- Slide header ---------- */
+  .axis{
+    display:inline-flex;align-items:center;gap:10px;margin-bottom:18px;
+  }
+  .axis .chip{
+    background:var(--red);color:#fff;font-weight:700;font-size:12px;
+    letter-spacing:1.2px;padding:5px 12px;border-radius:999px;text-transform:uppercase;
+  }
+  h1{font-size:44px;line-height:1.1;color:var(--ink);margin-bottom:6px;font-weight:800}
+  h1 .red{color:var(--red)}
+  h2{font-size:30px;line-height:1.15;color:var(--ink);font-weight:800;margin-bottom:8px}
+  h2 .red{color:var(--red)}
+  .lead{font-size:19px;line-height:1.55;color:var(--ink-soft);max-width:980px;font-weight:400}
+  .lead b,.lead strong{color:var(--ink)}
+  .thin-rule{height:3px;width:72px;background:var(--red);border-radius:3px;margin:14px 0 22px}
+
+  /* ---------- Cards / grids ---------- */
+  .grid{display:grid;gap:16px;flex:1;align-content:start}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+  .card{
+    background:var(--bg-alt);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;box-shadow:var(--shadow);
+  }
+  .card .num{
+    font-size:13px;font-weight:800;color:var(--red);letter-spacing:1px;
+    text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;
+  }
+  .card .num .dot{width:9px;height:9px;border-radius:50%;background:var(--red);display:inline-block}
+  .card h3{font-size:18px;margin-bottom:8px;color:var(--ink);font-weight:700}
+  .card p{font-size:15px;line-height:1.5;color:var(--ink-soft)}
+  .card p b{color:var(--ink)}
+
+  /* ---------- Callouts ---------- */
+  .callout{
+    background:var(--red-soft);border-left:5px solid var(--red);border-radius:10px;
+    padding:14px 18px;margin-top:18px;font-size:16px;line-height:1.5;color:#5c0f1e;
+  }
+  .callout b{color:var(--red-dark)}
+  .quote{
+    font-size:20px;line-height:1.5;color:var(--ink);
+    border-left:5px solid var(--red);padding:10px 22px;background:#fff;
+    border-radius:8px;font-style:italic;
+  }
+
+  /* ---------- Big KPI tiles ---------- */
+  .kpi-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .kpi{
+    background:var(--ink);color:#fff;border-radius:var(--radius);padding:18px 20px;
+    box-shadow:var(--shadow);
+  }
+  .kpi.alt{background:var(--red)}
+  .kpi .val{font-size:30px;font-weight:800;line-height:1;letter-spacing:.5px}
+  .kpi .val small{font-size:15px;font-weight:600;color:rgba(255,255,255,.75)}
+  .kpi .lbl{font-size:12.5px;margin-top:9px;color:rgba(255,255,255,.82);line-height:1.35;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+
+  /* ---------- Tables ---------- */
+  .table-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{
+    background:var(--ink);color:#fff;text-align:left;padding:11px 14px;
+    font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;font-weight:700;
+  }
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-soft);line-height:1.45}
+  tbody tr:nth-child(even){background:var(--bg-alt)}
+  tbody tr:hover{background:var(--red-soft)}
+  td b,td strong{color:var(--ink)}
+  td .ok{color:var(--green);font-weight:700}
+  td .bad{color:var(--red);font-weight:700}
+  td .hl{background:var(--red-soft);border-radius:6px;padding:2px 8px;font-weight:700;color:var(--red-dark)}
+
+  /* ---------- Lists ---------- */
+  ul.clean{list-style:none}
+  ul.clean li{position:relative;padding-left:30px;font-size:17px;line-height:1.5;margin-bottom:12px;color:var(--ink-soft)}
+  ul.clean li b,ul.clean li strong{color:var(--ink)}
+  ul.clean li::before{
+    content:"";position:absolute;left:4px;top:9px;width:12px;height:12px;border-radius:4px;
+    background:var(--red);transform:rotate(45deg);
+  }
+  ul.clean li .tag{
+    display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:800;
+    letter-spacing:.8px;padding:2px 8px;border-radius:6px;margin-right:8px;text-transform:uppercase;vertical-align:1px;
+  }
+  ul.flow{list-style:none;counter-reset:step}
+  ul.flow li{
+    counter-increment:step;position:relative;padding-left:52px;margin-bottom:12px;
+    font-size:16px;line-height:1.45;color:var(--ink-soft);
+  }
+  ul.flow li::before{
+    content:counter(step);position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;
+    background:var(--red);color:#fff;font-weight:800;font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  ul.flow li b,ul.flow li strong{color:var(--ink)}
+  ul.flow li .arr{color:var(--red);font-weight:800}
+
+  /* ---------- Footer ---------- */
+  .foot{
+    margin-top:auto;padding-top:16px;display:flex;justify-content:space-between;align-items:center;
+    font-size:12px;color:var(--muted);border-top:1px solid var(--line);letter-spacing:.5px;
+  }
+  .foot .wm{color:var(--red);font-weight:800;letter-spacing:1px}
+
+  /* ---------- One-liner hero ---------- */
+  .hero{
+    flex:1;display:flex;flex-direction:column;justify-content:center;max-width:1080px;margin:0 auto;width:100%;
+  }
+  .hero .brand{
+    font-size:13px;letter-spacing:4px;color:var(--red);font-weight:800;text-transform:uppercase;margin-bottom:14px;
+  }
+  .hero h1{font-size:64px;line-height:1.02;margin-bottom:10px}
+  .hero h1 .nestlink{color:var(--red)}
+  .hero .sub{font-size:22px;color:var(--ink-soft);font-weight:500;margin-bottom:34px}
+  .hero .oneline{
+    background:var(--ink);color:#fff;border-radius:var(--radius);padding:26px 30px;font-size:23px;line-height:1.5;
+    box-shadow:var(--shadow);
+  }
+  .hero .oneline .hl{color:var(--amber);font-weight:800}
+  .hero .meta{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap}
+  .hero .meta .pill{
+    border:1px solid var(--line);color:var(--ink-soft);background:#fff;font-size:13.5px;font-weight:600;
+    padding:7px 14px;border-radius:999px;
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff;overflow:visible}
+    #progress,#counter,.nav-arrow{display:none !important}
+    .slide{
+      position:relative;inset:auto;display:flex !important;width:100vw;height:100vh;
+      page-break-after:always;break-after:page;overflow:hidden;padding:44px 52px 32px;
+    }
+    .slide:last-child{page-break-after:auto;break-after:auto}
+  }
+  @page{size:16in 9in;margin:0}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<button id="prev" class="nav-arrow" title="Anterior (←)">‹</button>
+<button id="next" class="nav-arrow" title="Siguiente (→)">›</button>
+<div id="counter"></div>
+
+<!-- ============ SLIDE 1 · PORTADA ============ -->
+<section class="slide" data-title="Portada">
+  <div class="hero">
+    <div class="brand">Hackathon InnoLabs · Nestlé</div>
+    <h1>Nest<span class="nestlink">Link</span></h1>
+    <div class="sub">Capa de coordinación y visibilidad para la logística interna de planta</div>
+    <div class="oneline">
+      «Convertimos la logística interna de una planta Nestlé en un sistema que se
+      <span class="hl">percibe, decide y coordina solo</span>: una sola flota, un solo mapa,
+      <span class="hl">cero paquetes atascados, cero viajes en vacío y menos energía por pallet movido</span>.»
+    </div>
+    <div class="meta">
+      <span class="pill">⏱ 5:00 pitch + 2:00 Q&amp;A</span>
+      <span class="pill">🎯 6 ejes obligatorios</span>
+      <span class="pill">🚚 Demo en vivo · planta REALISTIC · LiDAR ON</span>
+      <span class="pill">✅ 89/89 tests · KPI ronda 2.8 activo</span>
+    </div>
+  </div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Pitch · Hackathon InnoLabs Nestlé · 4-sep-2026</span><span>1 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 2 · EJE 1 PROBLEMÁTICA ============ -->
+<section class="slide" data-title="1 · Problemática">
+  <div class="axis"><span class="chip">Eje 1 · Problemática</span></div>
+  <h1>El reto: automatizar el flujo entre <span class="red">producción y almacenamiento</span></h1>
+  <p class="lead">La pregunta central de Nestlé: <i>¿cómo automatizar y optimizar el flujo de <b>materiales y productos</b> usando tecnologías autónomas que mejoren <b>productividad, eficiencia y seguridad</b>?</i></p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="num"><span class="dot"></span>Dirección 1</div>
+      <h3>Producto terminado → almacén</h3>
+      <p><b>Traslado automático</b> desde las <b>líneas de producción semiautomáticas</b> hacia el <b>almacenamiento</b>.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Dirección 2</div>
+      <h3>Materiales → empaquetadoras</h3>
+      <p><b>Suministro oportuno</b> desde el <b>almacén</b> hacia las <b>máquinas empaquetadoras</b>.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Hoy</div>
+      <h3>Costos que se esconden</h3>
+      <p><b>Intervenciones manuales</b> y tiempos improductivos; <b>riesgos operativos</b> del movimiento interno; <b>recorridos, recursos y tiempos</b> de abastecimiento no optimizados.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Meta</div>
+      <h3>Lo que pide el reto</h3>
+      <p><b>Costo-beneficio convincente</b>, <b>viable en un entorno industrial real</b> y con <b>potencial de escalabilidad</b>.</p>
+    </div>
+  </div>
+  <div class="callout"><b>Los costos ocultos no son las máquinas:</b> los <b>viajes en vacío (~45&nbsp;% de los km)</b>, los <b>paquetes que se quedan atascados</b> y el <b>tiempo de gente</b> que debería estar en valor, no desbloqueando robots.</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Eje 1 · Problemática</span><span>2 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 3 · EJE 2 SOLUCIÓN + VIABILIDAD ============ -->
+<section class="slide" data-title="2 · Solución y Viabilidad">
+  <div class="axis"><span class="chip">Eje 2 · Solución + Viabilidad</span></div>
+  <h1>Un solo <span class="red">motor de coordinación</span> para el doble flujo producción ↔ almacén</h1>
+  <p class="lead">Producto terminado <b>→ almacén</b> y <b>materiales → empaquetadoras</b>, coordinados por <b>AMRs autónomos</b> sobre <b>protocolo abierto API/WebSocket</b>, <b>IA de coordinación (matching)</b> y <b>analítica de datos + KPIs en tiempo real</b>.</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="num"><span class="dot"></span>Mapa vivo</div>
+      <h3>Topología real, no un dibujo</h3>
+      <p>Estaciones, pasillos, <b>muros físicos</b> que ningún robot cruza y <b>peatones</b> que la flota esquiva sin detener producción. La decisión corre sobre el layout real.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Protocolo abierto</div>
+      <h3>Flota unificada, agnóstica de fabricante</h3>
+      <p>La lógica de misión se expone por <b>API/WebSocket</b>. Cualquier <b>AMR / vehículo autónomo</b> que publique posición y acepte misión se integra.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>IA de coordinación</div>
+      <h3>Coordinación es software, no firmware</h3>
+      <p><b>Asignación óptima (matching)</b>, <b>recarga inteligente</b> y prioridades por misión.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Ronda 2.1–2.8</div>
+      <h3>Entrega exclusiva separada de producción</h3>
+      <p><b>5 AMRs de producción (AMR 1–5)</b> + <b>AMR 6 exclusivo</b> por la <b>ruta rosada</b> hasta el <b>muro externo</b> (zona de almacenamiento/despacho); <b>4 OUTs en cuadrícula 2×2</b> con <b>mission control</b> de estados/asignaciones: producto terminado listo para almacén, sin bloqueos.</p>
+    </div>
+  </div>
+  <div class="card" style="grid-column:1/-1;margin-top:16px;">
+    <div class="num"><span class="dot"></span>Datos</div>
+    <h3>Analítica de datos en tiempo real y KPIs</h3>
+    <p>La operación <b>se mide y se decide con datos</b>, no a ciegas: viajes, tiempos, paradas evitadas, km evitados, ROI y tiempo en OUT en vivo.</p>
+  </div>
+  <div class="callout"><b>Clave técnica con los jueces:</b> «El MVP es un <b>simulador de decisión</b>: validamos reglas, KPIs y ahorros <b>antes de tocar un robot real</b>. Lo respaldan <b>89 tests automatizados</b> y corridas headless por semilla que verifican <b>cero paquetes atascados</b> (incl. recargas forzadas).»</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Eje 2 · Solución + Viabilidad</span><span>3 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 4 · DEMO 1 · PRODUCCIÓN → OUT ============ -->
+<section class="slide" data-title="Demo 1 · Producción → OUT">
+  <div class="axis"><span class="chip">Demo en vivo · 1/2</span></div>
+  <h1>Demo · El flujo de producción <span class="red">hasta el OUT</span></h1>
+  <p class="lead">Planta <b>REALISTIC</b>, pantalla completa, LiDAR ON — abastecimiento preventivo y entrega a los <b>4 OUTs</b>.</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-2" style="grid-template-columns:1.08fr 1fr;">
+    <div class="card" style="padding:12px 12px 8px;">
+      <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+        <defs>
+          <style>
+            .d-bg{fill:#F6F6F8;stroke:#E6E6E6;stroke-width:1}
+            .d-box{fill:#fff;stroke:#C8102E;stroke-width:1.4}
+            .d-line{fill:#fff;stroke:#D8D8D8;stroke-width:1}
+            .d-lbl{font:700 10px Helvetica,Arial,sans-serif;letter-spacing:.6px;fill:#C8102E}
+            .d-dim{font:600 10.5px Helvetica,Arial,sans-serif;fill:#8A8A8A}
+            .d-txt{font:600 11px Helvetica,Arial,sans-serif;fill:#1F1F1F}
+            .d-arrow{stroke:#C8102E;stroke-width:2;fill:none}
+            .d-arrow-feed{stroke:#C8102E;stroke-width:1.6;stroke-dasharray:5 4;fill:none}
+            .d-pink{stroke:#E24E8B;stroke-width:3;stroke-dasharray:7 5;fill:none}
+          </style>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#C8102E"/></marker>
+          <marker id="ahp" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#E24E8B"/></marker>
+          <g id="robot"><rect x="-8" y="4" width="16" height="11" rx="4" fill="#C8102E"/><circle cx="0" cy="-2" r="5.5" fill="#C8102E"/><circle cx="-2.5" cy="-3.5" r="1.5" fill="#fff"/><circle cx="2.5" cy="-3.5" r="1.5" fill="#fff"/></g>
+          <g id="dotp"><circle r="4" fill="#E8A33D"/></g>
+          <g id="person"><circle cx="0" cy="-7" r="4" fill="#1F6FB2"/><rect x="-4.5" y="-1" width="9" height="12" rx="3.5" fill="#1F6FB2"/></g>
+        </defs>
+        <rect class="d-bg" x="2" y="2" width="696" height="336" rx="12"/>
+        <path class="d-arrow" d="M 694 30 L 654 30" marker-end="url(#ah)"/>
+        <text class="d-dim" x="674" y="20" text-anchor="middle">Materia prima (ESTE)</text>
+        <rect class="d-box" x="500" y="14" width="150" height="46" rx="8"/>
+        <text class="d-lbl" x="575" y="31" text-anchor="middle">ABASTECIMIENTO</text>
+        <text class="d-lbl" x="575" y="47" text-anchor="middle">PREVENTIVO</text>
+        <path class="d-arrow-feed" d="M 575 60 L 575 88 L 208 88" marker-end="url(#ah)"/>
+        <text class="d-dim" x="575" y="78" text-anchor="middle">abastece antes del umbral crítico</text>
+        <rect class="d-line" x="24" y="96" width="176" height="52" rx="8"/>
+        <text class="d-txt" x="112" y="128" text-anchor="middle">LÍNEA 1</text>
+        <use href="#dotp" x="184" y="122"/>
+        <rect class="d-line" x="24" y="156" width="176" height="52" rx="8"/>
+        <text class="d-txt" x="112" y="188" text-anchor="middle">LÍNEA 2</text>
+        <use href="#dotp" x="184" y="182"/>
+        <rect class="d-line" x="24" y="216" width="176" height="52" rx="8"/>
+        <text class="d-txt" x="112" y="248" text-anchor="middle">LÍNEA 3</text>
+        <use href="#dotp" x="184" y="242"/>
+        <rect class="d-line" x="24" y="276" width="176" height="52" rx="8"/>
+        <text class="d-txt" x="112" y="308" text-anchor="middle">LÍNEA 4</text>
+        <use href="#dotp" x="184" y="302"/>
+        <use href="#robot" x="210" y="122"/><use href="#robot" x="210" y="182"/><use href="#robot" x="210" y="242"/><use href="#robot" x="210" y="302"/>
+        <text class="d-dim" x="222" y="330">AMR 1–4 · producción</text>
+        <path class="d-arrow" d="M 200 122 L 246 200 M 200 182 L 248 200 M 200 242 L 248 200 M 200 302 L 244 200" marker-end="url(#ah)"/>
+        <rect class="d-box" x="252" y="164" width="108" height="72" rx="8"/>
+        <text class="d-lbl" x="306" y="204" text-anchor="middle">PALETIZADO</text>
+        <use href="#robot" x="370" y="200"/>
+        <text class="d-dim" x="378" y="230">AMR 5</text>
+        <path class="d-arrow" d="M 362 200 L 404 200" marker-end="url(#ah)"/>
+        <text class="d-dim" x="525" y="110" text-anchor="middle">4 OUTs 2×2 · mission control</text>
+        <rect class="d-box" x="410" y="120" width="110" height="48" rx="7"/>
+        <text class="d-txt" x="465" y="148" text-anchor="middle">OUT 1</text>
+        <rect class="d-box" x="530" y="120" width="110" height="48" rx="7"/>
+        <text class="d-txt" x="585" y="148" text-anchor="middle">OUT 2</text>
+        <rect class="d-box" x="410" y="185" width="110" height="48" rx="7"/>
+        <text class="d-txt" x="465" y="206" text-anchor="middle">OUT 3</text>
+        <text x="465" y="224" text-anchor="middle" font-size="15">📦</text>
+        <rect class="d-box" x="530" y="185" width="110" height="48" rx="7"/>
+        <text class="d-txt" x="585" y="213" text-anchor="middle">OUT 4</text>
+        <text class="d-dim" x="525" y="253" text-anchor="middle">📦 se enciende al llegar</text>
+      </svg>
+    </div>
+    <div>
+      <ul class="flow">
+        <li><b>Materia prima por el este</b> <span class="arr">→</span> abastecimiento <b>preventivo</b> a líneas <i>antes</i> de que se vacíen (mira el KPI de <b>paradas evitadas</b> subir).</li>
+        <li><b>Las 4 líneas procesan</b> <span class="arr">→</span> cada ~20 s sale un paquete de producción.</li>
+        <li>Un AMR lo lleva a <b>paletizado</b> y su entrega lo deja listo en uno de los <b>4 OUTs</b> <i>(señala la cuadrícula 2×2)</i>.</li>
+        <li>Al llegar al OUT se enciende el <b>📦</b>: el paquete queda <b>listo para export</b>.</li>
+      </ul>
+      <div class="callout"><b>Tip:</b> si va lenta, sube la velocidad. Muestra la primera mitad del ciclo: SUPPLY <span class="arr">→</span> PICKUP_PT <span class="arr">→</span> EXPEDITION <span class="arr">→</span> OUT <span class="arr">→</span> 📦.</div>
+    </div>
+  </div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Demo 1 · Producción → OUT</span><span>4 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 5 · DEMO 2 · AMR 6 RUTA ROSA + ROBUSTEZ ============ -->
+<section class="slide" data-title="Demo 2 · AMR 6 y robustez">
+  <div class="axis"><span class="chip">Demo en vivo · 2/2</span></div>
+  <h1>Demo · AMR 6, <span class="red">ruta rosa</span> y robustez</h1>
+  <p class="lead">Export exclusiva al <b>muro externo</b>, recarga sin pérdida y peatones esquivados.</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-2" style="grid-template-columns:1.05fr 1fr;">
+    <div class="card" style="padding:12px 12px 8px;">
+      <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+        <defs>
+          <style>
+            .e-bg{fill:#F6F6F8;stroke:#E6E6E6;stroke-width:1}
+            .e-box{fill:#fff;stroke:#C8102E;stroke-width:1.4}
+            .e-lbl{font:700 10px Helvetica,Arial,sans-serif;letter-spacing:.6px;fill:#C8102E}
+            .e-dim{font:600 10.5px Helvetica,Arial,sans-serif;fill:#8A8A8A}
+            .e-txt{font:600 11px Helvetica,Arial,sans-serif;fill:#1F1F1F}
+            .e-pink{stroke:#E24E8B;stroke-width:3;stroke-dasharray:7 5;fill:none}
+            .e-muro{fill:#1F1F1F}
+          </style>
+          <marker id="ahp2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#E24E8B"/></marker>
+          <g id="robot2"><rect x="-8" y="4" width="16" height="11" rx="4" fill="#E24E8B"/><circle cx="0" cy="-2" r="5.5" fill="#E24E8B"/><circle cx="-2.5" cy="-3.5" r="1.5" fill="#fff"/><circle cx="2.5" cy="-3.5" r="1.5" fill="#fff"/></g>
+          <g id="person2"><circle cx="0" cy="-7" r="4" fill="#1F6FB2"/><rect x="-4.5" y="-1" width="9" height="12" rx="3.5" fill="#1F6FB2"/></g>
+        </defs>
+        <rect class="e-bg" x="2" y="2" width="696" height="336" rx="12"/>
+        <text class="e-dim" x="127" y="70" text-anchor="middle">4 OUTs 2×2 · mission control</text>
+        <rect class="e-box" x="24" y="82" width="96" height="44" rx="7"/>
+        <text class="e-txt" x="72" y="108" text-anchor="middle">OUT 1</text>
+        <text x="72" y="100" text-anchor="middle" font-size="12">📦</text>
+        <rect class="e-box" x="134" y="82" width="96" height="44" rx="7"/>
+        <text class="e-txt" x="182" y="108" text-anchor="middle">OUT 2</text>
+        <rect class="e-box" x="24" y="140" width="96" height="44" rx="7"/>
+        <text class="e-txt" x="72" y="166" text-anchor="middle">OUT 3</text>
+        <rect class="e-box" x="134" y="140" width="96" height="44" rx="7"/>
+        <text class="e-txt" x="182" y="166" text-anchor="middle">OUT 4</text>
+        <path class="e-pink" d="M 232 104 L 330 104 L 330 286 L 655 286" marker-end="url(#ahp2)"/>
+        <text class="e-dim" x="390" y="276" text-anchor="middle">RUTA ROSADA · export exclusiva</text>
+        <use href="#robot2" x="330" y="200"/>
+        <text class="e-lbl" x="344" y="160">AMR 6</text>
+        <use href="#person2" x="470" y="266"/>
+        <use href="#person2" x="530" y="252"/>
+        <text class="e-dim" x="505" y="298" text-anchor="middle">peatones esquivados</text>
+        <text class="e-dim" x="128" y="210" text-anchor="middle">recarga sin pérdida</text>
+        <text class="e-dim" x="128" y="226" text-anchor="middle">export abortada → buffer</text>
+        <text class="e-dim" x="128" y="242" text-anchor="middle">y se reprograma</text>
+        <rect class="e-muro" x="668" y="30" width="26" height="300" rx="6"/>
+        <text x="681" y="200" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="3" fill="#fff" transform="rotate(-90 681 200)">MURO EXTERNO</text>
+        <text class="e-dim" x="668" y="20">salida de producto terminado</text>
+      </svg>
+    </div>
+    <div>
+      <ul class="flow">
+        <li>El <b>AMR 6</b> toma el <b>📦</b> del OUT y lo lleva por la <b>ruta rosada</b> al <b>muro externo</b> — entrega exclusiva separada de producción.</li>
+        <li><b>Robustez visible:</b> ningún paquete se queda atascado <b>aunque el AMR de entrega vaya a cargar</b> — la export abortada <b>vuelve al buffer y se reprograma</b>, cero pérdidas.</li>
+        <li><b>Personas caminando:</b> la flota las detecta y <b>re-rutea al instante</b>; ningún nodo ocupado deja a un robot esperando sin salida.</li>
+      </ul>
+      <div class="card" style="background:var(--ink);border:none;margin-top:12px;">
+        <div class="num" style="color:var(--amber);">Dashboard en vivo</div>
+        <div class="kpi-tiles" style="grid-template-columns:1fr 1fr;">
+          <div class="kpi alt"><div class="val">↑</div><div class="lbl">Viajes completados</div></div>
+          <div class="kpi"><div class="val">↑</div><div class="lbl">Paradas evitadas</div></div>
+          <div class="kpi"><div class="val">↑</div><div class="lbl">Km evitados</div></div>
+          <div class="kpi"><div class="val">%</div><div class="lbl">ROI de flota</div></div>
+          <div class="kpi alt" style="grid-column:1/-1"><div class="val">≈1.5 <small>min</small></div><div class="lbl">Tiempo medio en OUT (ronda 2.8)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Demo 2 · AMR 6 · ruta rosa · robustez</span><span>5 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 6 · EJE 3 INNOVACIÓN ============ -->
+<section class="slide" data-title="3 · Innovación">
+  <div class="axis"><span class="chip">Eje 3 · Innovación</span></div>
+  <h1>Tres cosas que <span class="red">hoy no existen</span> en la operación</h1>
+  <p class="lead">Nuestra diferenciación no es una máquina más: es software de decisión que elimina fallos crónicos.</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-3">
+    <div class="card" style="border-top:5px solid var(--red);">
+      <div class="num"><span class="dot"></span>Innovación 1 · El más fuerte</div>
+      <h3>Mission control de estados por OUT</h3>
+      <p>Cada paquete que llega a un OUT se contabiliza en <b>stock</b> y se le <b>regala y encadena</b> una misión de export de forma automática. Elimina de raíz el problema crónico de los <b>puntos de entrega que se bloquean «para siempre»</b> — el fallo clásico de WMS/sistemas de control de flota.</p>
+    </div>
+    <div class="card" style="border-top:5px solid var(--amber);">
+      <div class="num"><span class="dot"></span>Innovación 2</div>
+      <h3>Entrega exclusiva + robustez ante batería</h3>
+      <p>Separar «<b>producir</b>» de «<b>exportar</b>» con un rol dedicado (AMR 6) y, si ese rol debe cargar, <b>abortar la export sin perder el paquete</b> (vuelve al buffer y se reprograma). Es <b>tolerancia a fallos en operación</b>, no en teoría.</p>
+    </div>
+    <div class="card" style="border-top:5px solid var(--blue);">
+      <div class="num"><span class="dot"></span>Innovación 3</div>
+      <h3>Decisión sobre percepción real (LiDAR)</h3>
+      <p>El mapa y las rutas que ven <b>son la percepción del robot</b>, no un dibujo decorativo — cierra el lazo <b>dato → decisión</b>.</p>
+    </div>
+  </div>
+  <div class="callout">Ver <b>Apéndice B</b> (comparativa humano vs NestLink) para la ventaja por dimensión. <i>Transición: del mapa a la comparativa.</i></div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Eje 3 · Innovación</span><span>6 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 7 · EJE 4 PROPUESTA DE VALOR ============ -->
+<section class="slide" data-title="4 · Propuesta de valor">
+  <div class="axis"><span class="chip">Eje 4 · Propuesta de valor Nestlé</span></div>
+  <h1>Impacto en <span class="red">productividad, seguridad y costos</span>, medido</h1>
+  <p class="lead">El reto pidió impacto en productividad, seguridad, recursos y costos — <b>los medimos todos</b>, cada uno con su fuente de dato (<i>Apéndice A</i>).</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-3">
+    <div class="card">
+      <div class="num"><span class="dot"></span>Productividad</div>
+      <h3>Más productividad de la flota</h3>
+      <p><b>Viajes completados</b> y <b>tiempo medio de entrega (min)</b> por misión → menor tiempo por pallet.</p>
+    </div>
+    <div class="card" style="border-top:5px solid var(--blue);">
+      <div class="num"><span class="dot"></span>Seguridad</div>
+      <h3>Menos riesgo operativo / más seguridad</h3>
+      <p><b>Percepción continua (LiDAR)</b> + muros físicos + peatones esquivados → <b>disminuyen los riesgos del movimiento interno</b>: menos choques, menos cuellos de botella, menos intervención humana cerca de máquinas.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Km improductivo</div>
+      <h3>Menos kilómetros improductivos</h3>
+      <p><b>Km evitados y ROI %</b> (km evitados / km totales) porque la asignación elimina la <b>pata vacía</b> (~45&nbsp;% del recorrido manual) → menos costo y menos energía.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Continuidad</div>
+      <h3>Menos paradas de línea</h3>
+      <p>Abastecimiento <b>preventivo</b> en el umbral crítico de los empaquetadores → <b>paradas evitadas</b>: el suministro oportuno que el reto exige.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Disponibilidad</div>
+      <h3>Cero OUTs bloqueados</h3>
+      <p>Mission control por OUT → el punto de salida del <b>producto terminado está siempre disponible</b>.</p>
+    </div>
+    <div class="card" style="border-top:5px solid var(--amber);">
+      <div class="num"><span class="dot"></span>Nuevo · Ronda 2.8</div>
+      <h3>KPI de servicio: tiempo medio en OUT</h3>
+      <p><b>≈1.5 min</b> en corridas de referencia → promesa de tiempo de salida del producto terminado <b>hacia el almacén</b>.</p>
+    </div>
+  </div>
+  <div class="card" style="grid-column:1/-1;margin-top:14px;background:var(--ink);border:none;">
+    <div class="num" style="color:var(--amber);">Costo-beneficio convincente</div>
+    <p style="color:#fff;"><b>Protocolo abierto</b> que protege la inversión actual en AMRs, y ahorros medidos en <b>km evitados, horas liberadas y energía por pallet</b>.</p>
+  </div>
+  <div class="callout"><b>Frase para los jueces:</b> «Esto no vende una máquina: vende <b>productividad, seguridad y eficiencia</b> medidas — <b>más metros por hora de flota, menos riesgo operativo y menos energía por pallet</b>.»</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Eje 4 · Propuesta de valor Nestlé</span><span>7 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 8 · EJE 5 SOSTENIBILIDAD ============ -->
+<section class="slide" data-title="5 · Sostenibilidad">
+  <div class="axis"><span class="chip">Eje 5 · Sostenibilidad y eficiencia</span></div>
+  <h1>Menos recorrido improductivo es <span class="red">sostenibilidad operativa</span></h1>
+  <p class="lead">Alineado con la meta <b>Net Zero 2050</b> de Nestlé y con el <b>ODS 12</b> (producción y consumo responsables).</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="num"><span class="dot"></span>Energía</div>
+      <h3>Menos energía por pallet movido</h3>
+      <p>Cada <b>km evitado</b> = menos consumo de la flota y, con flota eléctrica, <b>menos ciclos de carga y más vida útil de baterías</b>.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Residuos</div>
+      <h3>Menos residuos y retrabajo</h3>
+      <p><b>Cero paquetes olvidados</b> en OUTs y <b>cero entregas perdidas</b> por recarga → menos reproceso, menos material descartado.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Personas</div>
+      <h3>Optimización del personal humano</h3>
+      <p>La gente pasa de <b>desbloquear robots</b> a tareas de <b>mayor valor</b>, reduciendo el esfuerzo físico y la sobrecarga.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Medición</div>
+      <h3>Eficiencia de recursos medida</h3>
+      <p><b>Km evitados</b>, <b>paradas evitadas</b> y <b>tiempo en OUT</b> son, literalmente, <b>recursos (energía, tiempo, capacidad) que no se desperdician</b> — y se ven en vivo.</p>
+    </div>
+  </div>
+  <div class="callout"><b>Cierre de idea:</b> «Hacemos más pallets con <b>menos electricidad, menos horas y menos desperdicio</b> — eficiencia de recursos con números, no con eslóganes.»</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Eje 5 · Sostenibilidad</span><span>8 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 9 · EJE 6 ESCALABILIDAD ============ -->
+<section class="slide" data-title="6 · Escalabilidad">
+  <div class="axis"><span class="chip">Eje 6 · Escalabilidad y replicabilidad</span></div>
+  <h1>Diseñado para escalar <span class="red">desde el día uno</span></h1>
+  <p class="lead">Nestlé tiene <b>decenas de plantas</b>; NestLink fue construido pensando en todas ellas.</p>
+  <div class="thin-rule"></div>
+  <div class="grid cols-3">
+    <div class="card">
+      <div class="num"><span class="dot"></span>1</div>
+      <h3>Un centro = un «mundo» configurable</h3>
+      <p>Layout + flota + seed + ritmo de producción. Una planta nueva <b>no se reprograma: se configura</b>.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>2</div>
+      <h3>Multi-centro desde un tablero central</h3>
+      <p>El mismo cerebro puede operar <b>varias simulaciones hoy y varias plantas mañana</b> desde un solo tablero.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>3</div>
+      <h3>Replicable por diseño</h3>
+      <p>La capa de decisión es <b>agnóstica de hardware</b> y el mapa se carga del layout real → <b>puesta en marcha acelerada</b> en otro centro.</p>
+    </div>
+  </div>
+  <div class="callout"><b>Frase de cierre del eje:</b> «Lo que hoy corre para una planta, <b>es el mismo motor que mañana coordina un grupo de centros</b> desde un solo tablero.»</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Eje 6 · Escalabilidad</span><span>9 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 10 · CIERRE ============ -->
+<section class="slide" data-title="Cierre">
+  <div class="axis"><span class="chip">Cierre</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:1020px;">
+    <h1>Una flota, un mapa, <span class="red">cero pérdidas</span></h1>
+    <p class="lead" style="font-size:22px;margin:18px 0 28px;">NestLink convierte la logística interna en un sistema que <b>se percibe, decide y coordina solo</b> — <b>cero viajes en vacío, cero paquetes atascados y menos energía por pallet</b>, con cada KPI respaldado por el simulador de decisión.</p>
+    <div class="grid cols-2" style="margin-bottom:24px;">
+      <div class="card"><div class="num"><span class="dot"></span>Hoy</div><p><b>MVP de decisión</b> sobre datos reales de planta.</p></div>
+      <div class="card"><div class="num"><span class="dot"></span>Mañana</div><p>El <b>cerebro</b> que hace más sostenible y eficiente <b>cada centro Nestlé</b> desde un solo tablero.</p></div>
+    </div>
+    <div class="quote"><b>Gracias — quedamos listos para sus preguntas.</b></div>
+  </div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Cierre · demo en pantalla</span><span>10 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 11 · Q&A ============ -->
+<section class="slide" data-title="Q&A">
+  <div class="axis"><span class="chip">Q&amp;A · Apoyo</span></div>
+  <h1>Preguntas difíciles, <span class="red">respuestas preparadas</span></h1>
+  <div class="thin-rule"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:34%">Pregunta</th><th>Respuesta</th></tr></thead>
+      <tbody>
+        <tr><td><b>Q1 · ¿Cómo se conecta al hardware real? ¿Fabricantes?</b></td><td>La lógica de misión se expone vía <b>API/WebSocket</b>. Cualquier AMR que publique posición y acepte misión se integra; en la demo usamos <b>LiDAR simulado</b> para validar la capa de decisión antes de tocar hardware.</td></tr>
+        <tr><td><b>Q2 · ¿Y si un AMR se cae / pierde señal / va a cargar?</b></td><td>El coordinador detecta inactividad y <b>reasigna la misión a otro robot</b>; si una export iba en vuelo y el AMR de entrega debe cargar, el <b>paquete vuelve al buffer y se reprograma</b> — cero pérdidas.</td></tr>
+        <tr><td><b>Q3 · ¿De dónde sale exactamente el ROI?</b></td><td>De los <b>km evitados acumulados</b>: cada viaje sin pata vacía ahorra 45 % de su distancia (~0.32 km/viaje). <b>ROI = km evitados / (km recorridos + km evitados)</b>. Detalle en el Apéndice A.</td></tr>
+        <tr><td><b>Q4 · ¿Cómo lo implementarían en una planta real?</b></td><td>Las reglas ya están validadas en el simulador. El mapa se carga del layout real; la integración depende del fabricante. La puesta en marcha se acelera porque la capa de decisión es <b>agnóstica de hardware</b>.</td></tr>
+        <tr><td><b>Q5 · ¿Escala a varias plantas?</b></td><td>Sí: cada planta es un <b>«mundo» configurable</b> (layout + flota + seed) y un <b>tablero central</b> opera varias simulaciones hoy, varias plantas mañana.</td></tr>
+        <tr><td><b>Q6 · ¿Cómo se ve en sostenibilidad?</b></td><td>Cada km evitado reduce <b>energía y ciclos de batería</b>; <b>cero desperdicio</b> por paquetes olvidados/perdidos; el equipo humano se libera de tareas de bajo valor. Todo medido en los KPIs.</td></tr>
+        <tr><td><b>Q7 · ¿Qué sigue tras el hackathon?</b></td><td>(a) <b>Telemetría real</b> vía MQTT/REST, (b) <b>gemelo digital</b> con línea real, (c) <b>piloto</b> en una zona acotada de la planta.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Q&amp;A · apoyo</span><span>11 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 12 · APÉNDICE A ============ -->
+<section class="slide" data-title="Apéndice A · KPIs">
+  <div class="axis"><span class="chip">Apéndice A · Origen de los datos</span></div>
+  <h1>De dónde sale <span class="red">cada número</span></h1>
+  <p class="lead">Todo KPI nace del <b>simulador de decisión</b> (<code>backend/app/metrics.py</code> + eventos de <code>sim/</code>). Nada es inventado.</p>
+  <div class="thin-rule"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>KPI en dashboard</th><th>Fórmula exacta (código)</th><th>Fuente del dato</th></tr></thead>
+      <tbody>
+        <tr><td><b>Viajes completados</b></td><td><code>viajes_completados += 1</code> por cada <code>record_trip_completed()</code></td><td>Se dispara al <b>cerrar una misión</b> (descarga completada) en <code>agents.py</code> (estado UNLOADING).</td></tr>
+        <tr><td><b>Tiempo medio de entrega (min)</b></td><td><code>total_delivery_time_min / viajes_completados</code></td><td>Suma <code>(sim_time − created_at_sim)/60</code> de cada misión cerrada, dividida por nº de viajes.</td></tr>
+        <tr><td><b>Paradas evitadas</b></td><td><code>record_stoppage_prevented()</code></td><td>Disparo <b>preventivo</b> en <code>generators.py</code> cuando una línea cruza su <b>umbral crítico</b> de inventario.</td></tr>
+        <tr><td><b>Km evitados</b></td><td><code>Σ(viaje × 0.32 km × 0.45)</code> por viaje sin pata vacía (<code>was_empty_prevented=True</code>)</td><td>Cada misión es <b>consolidada</b> (evita la ida/vuelta en vacío). 0.32 km = referencia de la planta; 0.45 = 45 % del recorrido manual que es pata vacía.</td></tr>
+        <tr><td><b>ROI % de la flota</b></td><td><code>km_evitados / (total_km_recorridos + km_evitados) × 100</code></td><td>Compara <b>km coordinados</b> vs. lo que habría recorrido la operación <b>no coordinada</b> (con viajes en vacío).</td></tr>
+        <tr><td><b>Tiempo medio en OUT (min)</b> · ronda 2.8</td><td><code>total_out_wait_sec / out_pkgs_measured / 60</code></td><td>Cola FIFO <code>_out_pkg_arrivals[OUT]</code>: reloj abierto en <code>out_arrive</code>, cerrado cuando AMR 6 lo coloca en el muro (<code>out_ship</code>).</td></tr>
+        <tr><td><b>Paquetes atascados / EXPORT colgadas</b> · control</td><td><code>out_en_ruta[OUT] == 0</code> siempre que <code>stock&gt;0</code> ⇒ 1 export provisionada</td><td>Mission control por OUT (<code>out_stock</code> + <code>out_en_ruta</code>); verificado con tests (89/89) y E2E headless (0 colgadas en 1500–2500 ticks, incl. recargas forzadas).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><b>Validación:</b> suite <b>89/89</b>, typecheck 0 errores, corridas headless por semilla (<b>seed 11: 2500 ticks → 18 envíos medidos, tiempo medio en OUT ≈ 1.53 min</b>, OUTs drenados a 0). Las métricas se recalculan <b>en vivo en cada tick</b>.</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Apéndice A · Origen de KPIs</span><span>12 / 13</span></div>
+</section>
+
+<!-- ============ SLIDE 13 · APÉNDICE B ============ -->
+<section class="slide" data-title="Apéndice B · Comparativa">
+  <div class="axis"><span class="chip">Apéndice B · Humano vs NestLink</span></div>
+  <h1>Operación manual vs <span class="red">NestLink</span></h1>
+  <p class="lead"><b>Baseline conservador:</b> rutas en papel sin ver el piso, viajes en vacío (~45 %), abastecimiento reactivo (cuando ya se paró), OUTs sin estado, sin telemetría.</p>
+  <div class="thin-rule"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimensión</th><th>Operación manual</th><th>NestLink (medido)</th><th>Ventaja</th></tr></thead>
+      <tbody>
+        <tr><td><b>Kilometraje productivo</b></td><td class="bad">Solo ~55 % de los km</td><td class="ok">~100 % (asignación consolida ida+vuelta)</td><td><span class="hl">ROI % = km evitados sobre el total</span></td></tr>
+        <tr><td><b>Paquetes en puntos de entrega</b></td><td class="bad">Pueden olvidarse → bloquear el OUT</td><td class="ok">Mission control por OUT, <b>cero atascos</b></td><td>Disponibilidad del punto garantizada</td></tr>
+        <tr><td><b>Entrega durante recarga/pausa</b></td><td class="bad">Se pierde el paquete en curso</td><td class="ok">Export abortada vuelve al buffer y se reprograma</td><td><span class="hl">Cero pérdidas</span></td></tr>
+        <tr><td><b>Paradas de línea por inventario</b></td><td class="bad">Ocurren; se detectan al parar</td><td class="ok">Disparo preventivo en umbral crítico</td><td><span class="hl">Paradas evitadas contadas</span></td></tr>
+        <tr><td><b>Visibilidad</b></td><td class="bad">Ninguna</td><td class="ok">KPIs en vivo (incl. <b>tiempo en OUT</b>)</td><td>Decisión basada en datos</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><b>Conclusión cuantitativa (heurística del simulador):</b> por cada viaje consolidado, deja de recorrer <b>0.32 km × 45 % ≈ 0.14 km de pata vacía</b>. Ese ahorro es el ROI: la eficiencia que se <b>gana</b> aplicando NestLink en lugar del modelo humano/montacargas.</div>
+  <div class="foot"><span class="wm">NESTLINK</span><span>Apéndice B · Comparativa</span><span>13 / 13</span></div>
+</section>
+
+
+<script>
+  (function(){
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var total = slides.length;
+    var idx = 0;
+    var progress = document.getElementById('progress');
+    var counter = document.getElementById('counter');
+
+    function render(){
+      slides.forEach(function(s,i){ s.classList.toggle('active', i===idx); });
+      progress.style.width = (total<=1?0: (idx/(total-1))*100) + '%';
+      counter.textContent = (idx+1) + ' / ' + total;
+      try{ history.replaceState(null,'','#'+(idx+1)); }catch(e){}
+    }
+    function go(i){ idx = Math.max(0, Math.min(total-1, i)); render(); }
+
+    document.addEventListener('keydown', function(e){
+      if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); go(idx+1); }
+      else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); go(idx-1); }
+      else if(e.key==='Home'){ go(0); }
+      else if(e.key==='End'){ go(total-1); }
+      else if(/^[0-9]$/.test(e.key)){ go(parseInt(e.key,10)-1); }
+    });
+
+    document.addEventListener('click', function(e){
+      if(e.target.closest('.nav-arrow')) return;
+      var w = window.innerWidth;
+      var x = e.clientX;
+      if(x < w*0.28) go(idx-1); else go(idx+1);
+    });
+
+    document.getElementById('prev').addEventListener('click', function(ev){ ev.stopPropagation(); go(idx-1); });
+    document.getElementById('next').addEventListener('click', function(ev){ ev.stopPropagation(); go(idx+1); });
+
+    var h = parseInt((location.hash||'').replace('#',''),10);
+    if(!isNaN(h) && h>=1 && h<=total) idx = h-1;
+    render();
+  })();
+</script>
+</body>
+</html>
