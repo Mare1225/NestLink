@@ -1306,11 +1306,11 @@
   "walls": [
     {
       "id": "W1",
-      "x": 609,
-      "y": 57,
+      "x": 472,
+      "y": 64,
       "w": 8,
-      "h": 364,
-      "label": "Muro este (OUT/zona R)",
+      "h": 240,
+      "label": "Muro oeste (cara oeste de OUT)",
       "color": "#1f2937"
     },
     {
