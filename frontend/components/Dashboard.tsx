@@ -267,6 +267,7 @@ export function Dashboard() {
       spillMode={spillMode}
       selectedEdge={selectedEdge}
       onEdgeSelect={setSelectedEdge}
+      interactive={fullscreen}
     />
   );
 

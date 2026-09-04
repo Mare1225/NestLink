@@ -81,6 +81,8 @@ interface PlantMapProps {
   spillMode: SpillMode;
   selectedEdge: SelectedEdge | null;
   onEdgeSelect: (edge: SelectedEdge | null) => void;
+  /** Modo página única: fit real al viewport (sin viewScale) + pan/wheel zoom */
+  interactive?: boolean;
 }
 
 export function PlantMap({
@@ -92,13 +94,22 @@ export function PlantMap({
   spillMode,
   selectedEdge,
   onEdgeSelect,
+  interactive = false,
 }: PlantMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ scale: 1, offsetX: 0, offsetY: 0 });
   const boundsRef = useRef<LayoutBounds>(getLayoutBounds(layout));
+  const fitScaleRef = useRef(1);
+  const dragRef = useRef<{
+    active: boolean;
+    moved: boolean;
+    lastX: number;
+    lastY: number;
+  }>({ active: false, moved: false, lastX: 0, lastY: 0 });
   const [hoveredEdge, setHoveredEdge] = useState<SelectedEdge | null>(null);
   const hoveredRef = useRef<SelectedEdge | null>(null);
   const [mapOpacity, setMapOpacity] = useState(1);
+  const [panning, setPanning] = useState(false);
 
   const resize = useCallback(() => {
     const canvas = canvasRef.current;
@@ -112,24 +123,28 @@ export function PlantMap({
     const bounds = getLayoutBounds(layout);
     boundsRef.current = bounds;
 
-    const pad = 40;
+    // Fullscreen: pad mínimo y SIN viewScale → llena el viewport (sin letterboxing)
+    // Dashboard normal: conserva viewScale (Huge 0.7) + pad 40
+    const pad = interactive ? 8 : 40;
     const fitScale = Math.min(
-      (canvas.width - pad * 2) / bounds.width,
-      (canvas.height - pad * 2) / bounds.height
+      (canvas.width - pad * 2) / Math.max(bounds.width, 1),
+      (canvas.height - pad * 2) / Math.max(bounds.height, 1)
     );
-    // Zoom de vista por layout (viewScale < 1 encoge el mapa en pantalla)
     const viewScale =
-      typeof layout.viewScale === "number" && layout.viewScale > 0
-        ? layout.viewScale
-        : 1;
+      interactive
+        ? 1
+        : typeof layout.viewScale === "number" && layout.viewScale > 0
+          ? layout.viewScale
+          : 1;
     const scale = fitScale * viewScale;
+    fitScaleRef.current = fitScale;
 
     transformRef.current = {
       scale,
       offsetX: (canvas.width - bounds.width * scale) / 2 - bounds.minX * scale,
       offsetY: (canvas.height - bounds.height * scale) / 2 - bounds.minY * scale,
     };
-  }, [layout]);
+  }, [layout, interactive]);
 
   useEffect(() => {
     setMapOpacity(0.35);
@@ -588,6 +603,18 @@ export function PlantMap({
     return () => cancelAnimationFrame(id);
   }, [draw]);
 
+  const clientToCanvas = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { sx: 0, sy: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+    const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+    return {
+      sx: (clientX - rect.left) * scaleX,
+      sy: (clientY - rect.top) * scaleY,
+    };
+  };
+
   const handlePointer = (
     clientX: number,
     clientY: number,
@@ -596,11 +623,7 @@ export function PlantMap({
     if (spillMode === "none") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
-    const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
-    const sx = (clientX - rect.left) * scaleX;
-    const sy = (clientY - rect.top) * scaleY;
+    const { sx, sy } = clientToCanvas(clientX, clientY);
     const hit = findEdgeAtScreenPoint(layout, sx, sy, toScreen, 18);
 
     if (!hit) {
@@ -633,7 +656,66 @@ export function PlantMap({
     if (isClick) onEdgeSelect(edge);
   };
 
+  // Wheel zoom (solo interactive) — non-passive para preventDefault
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !interactive) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const { sx, sy } = clientToCanvas(e.clientX, e.clientY);
+      const t = transformRef.current;
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      const base = fitScaleRef.current;
+      const minS = base * 0.4;
+      const maxS = base * 12;
+      const newScale = Math.min(maxS, Math.max(minS, t.scale * factor));
+      if (Math.abs(newScale - t.scale) < 1e-9) return;
+      const lx = (sx - t.offsetX) / t.scale;
+      const ly = (sy - t.offsetY) / t.scale;
+      t.scale = newScale;
+      t.offsetX = sx - lx * newScale;
+      t.offsetY = sy - ly * newScale;
+    };
+
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  }, [interactive, layoutKey]);
+
+  const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!interactive || e.button !== 0) return;
+    // En modo derrame el click selecciona arista; pan solo si spillMode === none
+    if (spillMode !== "none") return;
+    dragRef.current = {
+      active: true,
+      moved: false,
+      lastX: e.clientX,
+      lastY: e.clientY,
+    };
+    setPanning(true);
+  };
+
   const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const drag = dragRef.current;
+    if (interactive && drag.active) {
+      const dx = e.clientX - drag.lastX;
+      const dy = e.clientY - drag.lastY;
+      if (!drag.moved && Math.hypot(dx, dy) > 3) drag.moved = true;
+      if (drag.moved) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+          const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+          transformRef.current.offsetX += dx * scaleX;
+          transformRef.current.offsetY += dy * scaleY;
+        }
+        drag.lastX = e.clientX;
+        drag.lastY = e.clientY;
+      }
+      return;
+    }
+
     if (spillMode === "none") {
       hoveredRef.current = null;
       setHoveredEdge(null);
@@ -642,30 +724,52 @@ export function PlantMap({
     handlePointer(e.clientX, e.clientY, false);
   };
 
+  const endDrag = () => {
+    if (dragRef.current.active) {
+      dragRef.current.active = false;
+      setPanning(false);
+    }
+  };
+
+  const onMouseUp = () => {
+    endDrag();
+  };
+
   const onClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    // Ignorar click si fue un pan
+    if (dragRef.current.moved) {
+      dragRef.current.moved = false;
+      return;
+    }
     if (spillMode === "none") return;
     handlePointer(e.clientX, e.clientY, true);
   };
 
   const onMouseLeave = () => {
+    endDrag();
     hoveredRef.current = null;
     setHoveredEdge(null);
   };
 
-  const cursor =
-    spillMode !== "none"
+  const cursor = panning
+    ? "grabbing"
+    : spillMode !== "none"
       ? hoveredEdge
         ? "pointer"
         : "crosshair"
-      : "default";
+      : interactive
+        ? "grab"
+        : "default";
 
   return (
     <canvas
       ref={canvasRef}
       className="block w-full h-full transition-opacity duration-300 ease-out"
-      style={{ cursor, opacity: mapOpacity }}
+      style={{ cursor, opacity: mapOpacity, touchAction: interactive ? "none" : undefined }}
       aria-label="Mapa 2D de planta NestLink"
+      onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
       onClick={onClick}
       onMouseLeave={onMouseLeave}
     />
