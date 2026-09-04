@@ -152,11 +152,12 @@ class SimulationEnvironment:
 
             # 4b. Evasión y resolución de conflictos AMR<->AMR (cabeceo)
             AmrYieldResolver.resolve_amr_conflicts(self, dt_sim)
-            self.check_freeze_timeouts()
 
             # 5. Cinemática de AMRs (con callback a generator para restock y drain)
             for amr in self.amrs:
                 amr.step(dt_sim, self.G, active_obstacles, self.metrics, self.sim_time, self.generator, env=self)
+
+            self.check_freeze_timeouts()
 
             # 6. Broadcast WS
             snapshot = self.get_snapshot()
@@ -178,19 +179,48 @@ class SimulationEnvironment:
                 return True
         return False
 
+    def _is_pedestrian_stationary(self, amr: AMRAgent, min_seconds: float = 15.0) -> bool:
+        """Comprueba si el peatón cerca del AMR ha estado estacionario (sin cambiar posición) por >= min_seconds."""
+        active_obstacles = self.obstacle_manager.get_snapshot()
+        for obs in active_obstacles:
+            if obs.tipo != "OPERATOR":
+                continue
+            dx = (obs.x - amr.x) / 10.0
+            dy = (obs.y - amr.y) / 10.0
+            if math.sqrt(dx * dx + dy * dy) < obs.radius:
+                # Encontrar el PedestrianAgent en obstacle_manager
+                for ped in self.obstacle_manager.pedestrians:
+                    if ped.id == obs.id:
+                        # Si sólo tiene 1 waypoint o no tiene waypoints
+                        if not ped.waypoints or len(ped.waypoints) <= 1:
+                            return True
+                        # Trackear última posición conocida del peatón
+                        last_pos = getattr(ped, "_last_pos", (ped.x, ped.y))
+                        last_t = getattr(ped, "_last_pos_time", self.sim_time)
+                        dist_moved = math.hypot(ped.x - last_pos[0], ped.y - last_pos[1])
+                        if dist_moved > 1.0:
+                            ped._last_pos = (ped.x, ped.y)
+                            ped._last_pos_time = self.sim_time
+                        elif (self.sim_time - last_t) >= min_seconds:
+                            return True
+        return False
+
     def check_freeze_timeouts(self):
         """Si un AMR permanece atascado >= FREEZE_TIMEOUT_S sim, forzar descongelamiento determinista.
 
-        REROUTING siempre puede descongelarse. WAITING_OBSTACLE solo si no hay peatón activo cerca
-        (esperar a un humano es comportamiento legítimo, no congelamiento).
+        Descongelación para REROUTING, WAITING_OBSTACLE y WAITING.
+        Si hay un peatón cerca, solo se espera indefinidamente si el peatón está en movimiento.
+        Si el peatón es estacionario (inmóvil por >15s), se ignora temporalmente para no bloquear forever.
         """
         active_obstacles = self.obstacle_manager.get_snapshot()
         sorted_amrs = sorted(self.amrs, key=lambda a: a.id)
         for amr in sorted_amrs:
-            if amr.estado not in ["REROUTING", "WAITING_OBSTACLE"]:
+            if amr.estado not in ["REROUTING", "WAITING_OBSTACLE", "WAITING"]:
                 continue
             if amr.estado == "WAITING_OBSTACLE" and self._amr_blocked_by_pedestrian(amr, active_obstacles):
-                continue
+                # Si el peatón está en movimiento, es una espera legítima
+                if not self._is_pedestrian_stationary(amr, min_seconds=15.0):
+                    continue
 
             duracion = self.sim_time - getattr(amr, "_estado_desde", self.sim_time)
             if duracion < self.FREEZE_TIMEOUT_S:
@@ -202,11 +232,14 @@ class SimulationEnvironment:
             if dest:
                 new_path = find_shortest_path(self.G, amr.posicion_nodo, dest, self.node_positions)
 
-            if new_path and len(new_path) > 1:
+            if new_path:
                 amr.path = new_path
-                amr.target_node_idx = 1
+                amr.target_node_idx = 1 if len(new_path) > 1 else 0
                 amr.cediendo_paso = False
-                amr.estado = "MOVING_TO_DELIVERY" if (amr.tarea_actual and amr.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
+                if len(new_path) <= 1:
+                    amr.estado = "UNLOADING" if (amr.tarea_actual and amr.tarea_actual.estado == "en_curso") else "LOADING"
+                else:
+                    amr.estado = "MOVING_TO_DELIVERY" if (amr.tarea_actual and amr.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
                 amr._estado_desde = self.sim_time
                 self.add_notice("INFO", None, f"Descongelando tras {int(self.FREEZE_TIMEOUT_S)}s en {prev_estado}: {amr.nombre} retoma ruta")
             else:
@@ -254,10 +287,11 @@ class SimulationEnvironment:
 
         # Evasión AMR<->AMR
         AmrYieldResolver.resolve_amr_conflicts(self, dt_sim)
-        self.check_freeze_timeouts()
 
         for amr in self.amrs:
             amr.step(dt_sim, self.G, active_obstacles, self.metrics, self.sim_time, self.generator, env=self)
+
+        self.check_freeze_timeouts()
 
     def stop(self):
         self.is_running = False

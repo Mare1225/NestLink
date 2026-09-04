@@ -68,6 +68,8 @@ class AMRAgent:
         if env and hasattr(env, 'reserve_path'):
             env.reserve_path(self, calc_path)
         self.target_node_idx = 1 if len(self.path) > 1 else 0
+        if env and hasattr(env, 'sim_time'):
+            self._estado_desde = env.sim_time
         self.estado = "MOVING_TO_PICKUP"
         return True
 
@@ -81,6 +83,8 @@ class AMRAgent:
         generator_manager: Any = None,
         env: Optional[Any] = None
     ):
+        estado_previo = self.estado
+
         # 1. Comprobar proximidad con peatones
         is_blocked_by_pedestrian = False
         for obs in obstacles:
@@ -92,12 +96,17 @@ class AMRAgent:
                     is_blocked_by_pedestrian = True
                     break
 
-        if is_blocked_by_pedestrian or self.cediendo_paso:
+        is_stationary_over_timeout = (env and hasattr(env, '_is_pedestrian_stationary') and env._is_pedestrian_stationary(self, min_seconds=15.0) and (sim_time - getattr(self, "_estado_desde", sim_time)) >= getattr(env, "FREEZE_TIMEOUT_S", 90.0))
+
+        if (is_blocked_by_pedestrian and not is_stationary_over_timeout) or self.cediendo_paso:
             if self.estado in ["MOVING_TO_PICKUP", "MOVING_TO_DELIVERY"]:
                 self.estado = "WAITING_OBSTACLE"
+            if self.estado != estado_previo:
+                self._estado_desde = sim_time
             return
-        elif self.estado == "WAITING_OBSTACLE" and not self.cediendo_paso and not is_blocked_by_pedestrian:
+        elif self.estado == "WAITING_OBSTACLE":
             self.estado = "MOVING_TO_DELIVERY" if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
+            self._estado_desde = sim_time
 
         # 2. FSM Transitions
         if self.estado == "IDLE":
