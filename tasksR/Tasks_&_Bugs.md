@@ -43,3 +43,7 @@
   - **BUG (todavía reproducible): los peatones PODÍAN atravesar las paredes.** Causa: `PedestrianAgent.step` se movía en línea recta entre waypoints sin comprobar muros (los AMR usaban el grafo filtrado G, los peatones no).
   - **Fix de raíz:** `ObstacleManager` construye el grafo filtrado G y para cada peatón calcula **ruta segura** = secuencia de nodos conectada por `nx.shortest_path` sobre G (aristas que no cruzan muros). `PedestrianAgent` camina sobre esa ruta cíclica + **clamp defensivo** en `step` (`_edge_crosses_walls`) como red de seguridad.
   - Test nuevo `tests/test_pedestrians_walls.py` (3 casos): rutas sin cruce, 300 steps sin peatón dentro de un muro, W1/W2 alcanzan y=592. **pytest 82/82**, grafo conexo 75/75 (0 aristas perdidas), stack rebuilt healthy.
+- [x] **Feedback ronda 2.4 — nombres de AMRs → "AMR#"** — ✅ HECHO (commit `c5ad281`, 4-sep).
+  - `seed_realistic.json`: solo `nombre` de AMR_01..AMR_05 → **"AMR 1".."AMR 5"** (ids AMR_01..AMR_05 intactos, no rompe env.py ni tests).
+  - **PlantMap.tsx**: el label truncaba a la primera palabra (`split(" ")[0]`) → habría mostrado "AMR" para los 5; ahora si `nombre` empieza con "AMR " muestra el nombre completo. FleetDetailView/FleetBatteryPanel ya mostraban `nombre` completo.
+  - Validado: pytest 82/82, tsc 0 errores, `/api/v1/fleet` → "AMR 1"…, layout en vivo 75/92/6.
