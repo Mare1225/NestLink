@@ -92,7 +92,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 **Qué se ve:** Demo en pantalla + mensaje final (problema, solución, diferencial).
 
 **Qué decimos:**
-"En resumen: atacamos el problema real que planteó Nestlé — el flujo entre producción y almacén — con una solución viable, innovadora y escalable. Los dejamos con la demo en pantalla y estamos listos para sus preguntas."
+"En resumen: atacamos el problema real que planteó Nestlé — el flujo entre producción y almacén — con una solución viable, innovadora y escalable. Los dejamos con la demo en pantalla y estamos listos para sus preguntas. Y si quieren verlo funcionar, la demo en vivo queda publicada en la web."
 
 ---
 

@@ -12,3 +12,5 @@ __pycache__/
 logs/
 *.tsbuildinfo
 next-env.d.ts
+frontend/out/
+frontend/.next/

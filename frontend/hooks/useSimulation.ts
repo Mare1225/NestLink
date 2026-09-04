@@ -6,7 +6,7 @@ import {
   fetchMissions,
   parseSnapshot,
 } from "@/lib/api";
-import { WS_URL } from "@/lib/config";
+import { IS_STATIC_PAGES, WS_URL } from "@/lib/config";
 import { DemoEngine } from "@/lib/demoEngine";
 import type {
   AMRRenderState,
@@ -42,6 +42,12 @@ export function useSimulation(layout: PlantLayout | null) {
     let disposed = false;
 
     async function connect() {
+      // Despliegue estático (GitHub Pages): no hay backend → DemoEngine directo,
+      // sin esperar health-check ni abrir WebSocket.
+      if (IS_STATIC_PAGES) {
+        startOffline();
+        return;
+      }
       const healthy = await checkBackendHealth();
       if (disposed) return;
 
