@@ -164,6 +164,8 @@ export interface PlantLayout {
   /** Capas de fondo opcionales — impermeable si ausente/vacío */
   zones?: LayoutZone[];
   lines?: LayoutLine[];
+  /** Zoom de vista por layout (1 = full-fit). <1 reduce el tamaño aparente del mapa (p.ej. 0.7 en plantas densas). */
+  viewScale?: number;
 }
 
 /** Posición interpolada para render a 60fps */

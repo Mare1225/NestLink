@@ -107,10 +107,16 @@ export function PlantMap({
     boundsRef.current = bounds;
 
     const pad = 40;
-    const scale = Math.min(
+    const fitScale = Math.min(
       (canvas.width - pad * 2) / bounds.width,
       (canvas.height - pad * 2) / bounds.height
     );
+    // Zoom de vista por layout (viewScale < 1 encoge el mapa en pantalla)
+    const viewScale =
+      typeof layout.viewScale === "number" && layout.viewScale > 0
+        ? layout.viewScale
+        : 1;
+    const scale = fitScale * viewScale;
 
     transformRef.current = {
       scale,
