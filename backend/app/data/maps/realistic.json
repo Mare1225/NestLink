@@ -522,6 +522,13 @@
       "y": 50,
       "type": "cruce",
       "label": "X_C2"
+    },
+    {
+      "id": "OUT",
+      "x": 530,
+      "y": 200,
+      "type": "almacen",
+      "label": "OUT"
     }
   ],
   "edges": [
@@ -1174,14 +1181,6 @@
       "blocked": false
     },
     {
-      "from": "X_R15",
-      "to": "X_M06",
-      "length": 10,
-      "max_speed": 1.5,
-      "direction": "bi",
-      "blocked": false
-    },
-    {
       "from": "BUF_2",
       "to": "X_M08",
       "length": 5,
@@ -1193,14 +1192,6 @@
       "from": "BUF_3",
       "to": "X_M08",
       "length": 5,
-      "max_speed": 1.5,
-      "direction": "bi",
-      "blocked": false
-    },
-    {
-      "from": "WH_PT_1",
-      "to": "X_M06",
-      "length": 8,
       "max_speed": 1.5,
       "direction": "bi",
       "blocked": false
@@ -1244,6 +1235,22 @@
       "max_speed": 1.5,
       "direction": "bi",
       "blocked": false
+    },
+    {
+      "from": "OUT",
+      "to": "X_M02",
+      "length": 12,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false
+    },
+    {
+      "from": "WH_PT_1",
+      "to": "X_M08",
+      "length": 12,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false
     }
   ],
   "zones": [
@@ -1272,11 +1279,11 @@
       "color": "#ffedd5"
     },
     {
-      "label": "Out",
-      "x": 720,
-      "y": 400,
-      "w": 80,
-      "h": 30,
+      "label": "OUT (medio)",
+      "x": 480,
+      "y": 100,
+      "w": 100,
+      "h": 280,
       "color": "#fef9c3"
     }
   ],
