@@ -90,6 +90,20 @@
       "label": "WH_PT_2"
     },
     {
+      "id": "B10",
+      "x": 760,
+      "y": 470,
+      "type": "almacen",
+      "label": "B10"
+    },
+    {
+      "id": "B20",
+      "x": 800,
+      "y": 470,
+      "type": "almacen",
+      "label": "B20"
+    },
+    {
       "id": "WH_PT_3",
       "x": 400,
       "y": 300,
@@ -1245,6 +1259,22 @@
       "blocked": false
     },
     {
+      "from": "X_T16",
+      "to": "B10",
+      "length": 12,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false
+    },
+    {
+      "from": "X_T17",
+      "to": "B20",
+      "length": 12,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false
+    },
+    {
       "from": "WH_PT_1",
       "to": "X_M08",
       "length": 12,
@@ -1290,10 +1320,10 @@
   "walls": [
     {
       "id": "W1",
-      "x": 596,
-      "y": 70,
+      "x": 609,
+      "y": 57,
       "w": 8,
-      "h": 320,
+      "h": 364,
       "label": "Muro este (OUT/zona R)",
       "color": "#1f2937"
     },
@@ -1305,6 +1335,42 @@
       "h": 230,
       "label": "Muro oeste (columna M/OUT)",
       "color": "#1f2937"
+    },
+    {
+      "id": "W_TOP",
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 8,
+      "label": "Pared externa norte",
+      "color": "#111827"
+    },
+    {
+      "id": "W_BOTTOM",
+      "x": 0,
+      "y": 592,
+      "w": 1000,
+      "h": 8,
+      "label": "Pared externa sur",
+      "color": "#111827"
+    },
+    {
+      "id": "W_LEFT",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 600,
+      "label": "Pared externa oeste",
+      "color": "#111827"
+    },
+    {
+      "id": "W_RIGHT",
+      "x": 992,
+      "y": 0,
+      "w": 8,
+      "h": 600,
+      "label": "Pared externa este",
+      "color": "#111827"
     }
   ],
   "lines": [

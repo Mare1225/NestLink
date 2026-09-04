@@ -81,7 +81,7 @@ class TestMurallasNoCruzanRutas(unittest.TestCase):
 
     def test_03_muros_sin_derivar_en_grafo_desconectado(self):
         self.assertTrue(nx.is_connected(self.G.to_undirected()))
-        self.assertEqual(self.G.order(), 75)
+        self.assertEqual(self.G.order(), len(self.layout["nodes"]))
 
 
 if __name__ == "__main__":
