@@ -26,10 +26,10 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ## Slide 3 · Eje 2 · Solución y Viabilidad
 
-**Qué se ve:** Arquitectura end-to-end + qué resuelve + tecnologías usadas.
+**Qué se ve:** Arquitectura end-to-end + flota dimensionada + hardware (MiR1200) + transferencia + precisión de toma.
 
 **Qué decimos:**
-"Nuestra solución es una flota de AMRs coordinada por capas: percepción con sensores y visión computacional, una capa que detecta peatones en tiempo real, y un controlador de misión que le dice a cada robot qué hacer, por dónde y cuándo. Es viable en entorno industrial porque es modular, se monta sobre la planta de producción y usa tecnologías probadas: robótica móvil, IoT y analítica de datos. Lo importante: no cambiamos su proceso, automatizamos su logística interna."
+"Nuestra solución es una flota de AMRs coordinada por capas: percepción con sensores y visión, detección de peatones en tiempo real y un controlador de misión que dice a cada robot qué, por dónde y cuándo. Y está dimensionada a su realidad: para mover los 215 pallets mínimos al día necesitamos seis MiR1200 — cinco de línea continua y uno de reserva, que además toma las acciones prioritarias y lleva el tramo exclusivo del montacargas por su corredor rosado. ¿Por qué horquillas y no una tapa plana? Porque la tapa plana, la opción más barata, solo sirve si hay operarios en ambos extremos: el pallet se carga y descarga a mano. Nosotros acoplamos el robot a una cinta de rodillos a la misma altura: la caja sale del encartonador, cae al robot y él la entrega a la mesa en bodega; nadie toca la carga. Y como meter las horquillas exige milímetros y la navegación natural da centímetros, usamos navegación natural en el trayecto y referencia local en la toma: cámara que lee la ventana del pallet, marcador fiducial o detección de patas. Viable en entorno industrial, modular, sobre su propia planta."
 
 ---
 
@@ -38,7 +38,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 **Qué se ve:** Diagrama completo del ciclo: líneas → paletizado → 4 OUTs → AMR 6 por la ruta rosada → muro externo + dashboard con KPIs en vivo.
 
 **Qué decimos:**
-"Vamos a la demo. Miren el ciclo completo: la materia prima llega a las líneas de forma preventiva, antes de que se vacíen; un AMR recoge cada paquete de producción, lo lleva a paletizado y lo deja listo en uno de los cuatro puntos de salida. De ahí, el AMR 6 — rosa, es el único con ruta exclusiva — lo lleva hasta el muro externo de entrega, separado del área de producción. Noten la robustez: si el AMR 6 necesita recargar, completa primero la entrega y recién va a cargar. Y miren el tablero: viajes completados, paradas evitadas, tiempo en puntos de salida y el ROI de la flota, todo subiendo en vivo."
+"Vamos a la demo. Miren el ciclo completo: la materia prima llega a las líneas de forma preventiva, antes de que se vacíen; un AMR recoge cada paquete de producción, lo lleva a paletizado y lo deja listo en uno de los cuatro puntos de salida. De ahí, el AMR 6 — rosado, el único con ruta exclusiva, que asume el rol del montacargas — lo lleva hasta el muro externo de entrega, separado del área de producción. Noten la robustez: si el AMR 6 necesita recargar, completa primero la entrega y recién va a cargar. Y miren el tablero: viajes completados, paradas evitadas, tiempo en puntos de salida y el ROI de la flota, todo subiendo en vivo."
 
 ---
 
@@ -93,7 +93,7 @@ Las preguntas se responden sin support visual: se deja la lámina de Cierre (o l
 - *"¿Y si un robot de entrega debe cargar?"* → "La entrega se completa antes de la recarga, cero pérdidas."
 - *"¿Cómo perciben a las personas?"* → "Visión computacional + sensores: detectan al peatón y re-rutean al instante."
 - *"¿Qué pasa con su WMS?"* → "Nos integramos; no lo reemplazamos."
-- *"¿Cuánto cuesta?"* → "Lo que se evita en viajes vacíos, paradas y mermas financia la inversión; de ahí el ROI."
+- *"¿Cuánto cuesta?"* → "Seis MiR1200 dimensionados a sus 215 pallets/día. La transferencia más barata es la tapa plana manual, pero elegimos el acople a cinta de rodillos para la autonomía del fin de línea. Se paga con lo que se evita en viajes vacíos, paradas y mermas; de ahí el ROI."
 - *"¿Puede ir a otra planta?"* → "Se configura el nuevo mapa: los datos, no el desarrollo, son los que cambian."
 
 ---

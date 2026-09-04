@@ -259,8 +259,8 @@
 <!-- ============ SLIDE 3 · EJE 2 SOLUCIÓN + VIABILIDAD ============ -->
 <section class="slide" data-title="2 · Solución y Viabilidad">
   <div class="axis"><span class="chip">Eje 2 · Solución + Viabilidad</span></div>
-  <h1>Un solo <span class="red">motor de coordinación</span> para el doble flujo producción ↔ almacén</h1>
-  <p class="lead">Producto terminado <b>→ almacén</b> y <b>materiales → empaquetadoras</b>, coordinados por <b>AMRs autónomos</b> sobre <b>protocolo abierto API/WebSocket</b>, <b>IA de coordinación (matching)</b> y <b>analítica de datos + KPIs en tiempo real</b>.</p>
+  <h1>Un solo <span class="red">motor de coordinación</span> para el doble flujo</h1>
+  <p class="lead">Flota de <b>6 AMR MiR1200</b> para <b>215 pallets/día</b> · API/WebSocket · IA de matching · KPIs en vivo.</p>
   <div class="thin-rule"></div>
   <div class="grid cols-2">
     <div class="card">
@@ -279,17 +279,23 @@
       <p><b>Asignación óptima (matching)</b>, <b>recarga inteligente</b> y prioridades por misión.</p>
     </div>
     <div class="card">
-      <div class="num"><span class="dot"></span>Ronda 2.1–2.8</div>
-      <h3>Entrega exclusiva separada de producción</h3>
-      <p><b>5 AMRs de producción (AMR 1–5)</b> + <b>AMR 6 exclusivo</b> por la <b>ruta rosada</b> hasta el <b>muro externo</b> (zona de almacenamiento/despacho); <b>4 OUTs en cuadrícula 2×2</b> con <b>mission control</b> de estados/asignaciones: producto terminado listo para almacén, sin bloqueos.</p>
+      <div class="num"><span class="dot"></span>Flota dimensionada</div>
+      <h3>215 pallets/día → 6 AMR MiR1200</h3>
+      <p><b>5 de línea (AMR 1–5) + 1 de reserva</b> (AMR 6): asume <b>acciones prioritarias</b> y el <b>movimiento exclusivo del montacargas</b> por la <b>ruta rosada</b> al <b>muro externo</b>; <b>4 OUTs 2×2</b> mission control · <b>89 tests</b>.</p>
     </div>
   </div>
-  <div class="card" style="grid-column:1/-1;margin-top:16px;">
-    <div class="num"><span class="dot"></span>Datos</div>
-    <h3>Analítica de datos en tiempo real y KPIs</h3>
-    <p>La operación <b>se mide y se decide con datos</b>, no a ciegas: viajes, tiempos, paradas evitadas, km evitados, ROI y tiempo en OUT en vivo.</p>
+  <div class="grid cols-2" style="margin-top:16px;">
+    <div class="card">
+      <div class="num"><span class="dot"></span>Hardware · caso de costo</div>
+      <h3>MiR1200 Pallet Jack y la transferencia</h3>
+      <p><b>Plataforma fija</b> (MiR1350): la más barata, pero manual — sirve con operarios en ambos extremos. La elegida: <b>cinta/rodillos motorizados</b> — el robot se acopla a la mesa y la carga pasa sola: se integra al <b>fin de línea de empaque</b> y entrega en bodega sin manos.</p>
+    </div>
+    <div class="card">
+      <div class="num"><span class="dot"></span>Precisión de toma</div>
+      <h3>Milímetros donde hace falta</h3>
+      <p>Las horquillas piden <b>mm</b>; la navegación natural da <b>cm</b>. <b>Natural para el trayecto</b>, <b>referencia local para la toma</b>: cámara (ventana del pallet), fiducial o detección de patas. Estándar en los 6.</p>
+    </div>
   </div>
-  <div class="callout"><b>Clave técnica con los jueces:</b> «El MVP es un <b>simulador de decisión</b>: validamos reglas, KPIs y ahorros <b>antes de tocar un robot real</b>. Lo respaldan <b>89 tests automatizados</b> y corridas headless por semilla que verifican <b>cero paquetes atascados</b> (incl. recargas forzadas).»</div>
   <div class="foot"><span class="wm">NESTLINK</span><span>Eje 2 · Solución + Viabilidad</span><span>3 / 11</span></div>
 </section>
 
@@ -297,7 +303,7 @@
 <section class="slide" data-title="Demo · Producción → Almacén">
   <div class="axis"><span class="chip">Demo en vivo</span></div>
   <h1>Demo · Del <span class="red">producción al muro externo</span> en un solo ciclo</h1>
-  <p class="lead">Planta <b>REALISTIC</b>, LiDAR ON: abastecimiento preventivo, entrega a los <b>4 OUTs</b> y export exclusiva del <b>AMR 6</b> por la ruta rosada.</p>
+  <p class="lead">Planta <b>REALISTIC</b>, LiDAR ON: abastecimiento preventivo, entrega a los <b>4 OUTs</b> y export exclusiva del <b>AMR 6</b> por la ruta rosada — el rol del montacargas.</p>
   <div class="thin-rule"></div>
   <div class="grid cols-2" style="grid-template-columns:1.5fr 1fr;">
     <div class="card" style="padding:12px 12px 8px;">
@@ -367,7 +373,7 @@
       <ul class="flow">
         <li><b>Materia prima</b> <span class="arr">→</span> abastecimiento <b>preventivo</b>, <i>antes</i> del umbral crítico — <b>paradas evitadas</b> arriba.</li>
         <li>Las <b>4 líneas</b> procesan <span class="arr">→</span> un AMR lleva el paquete a <b>paletizado</b> <span class="arr">→</span> <b>📦 listo en un OUT</b> (mission control 2×2).</li>
-        <li>El <b>AMR 6</b> recoge el 📦 y lo lleva por la <b>ruta rosada</b> hasta el <b>muro externo</b> — entrega exclusiva, separada de producción.</li>
+        <li>El <b>AMR 6</b> recoge el 📦 y lo lleva por la <b>ruta rosada</b> hasta el <b>muro externo</b> — entrega exclusiva, separada de producción: <b>asume el rol del montacargas</b>.</li>
         <li><b>Robustez:</b> si AMR 6 debe cargar, <b>completa la entrega antes de ir a cargar</b>; peatones esquivados sin detener producción.</li>
       </ul>
       <div class="card" style="background:var(--ink);border:none;margin-top:12px;">
