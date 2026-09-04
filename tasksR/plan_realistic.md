@@ -26,16 +26,16 @@
 
 > Concepto gancho del pitch: _"lo que ves trazado en el piso es el barrido LiDAR del AMR mapeando su entorno en tiempo real"_ → la ruta planificada se convierte en parte del storytelling de navegación autónoma.
 
-- [ ] **Ruta como sweep LiDAR** (frontend · dueño: **Cursor**)
-  - Renderizar el trazo de ruta planificado de cada AMR como un barrido tipo LiDAR (línea de escaneo con pulso/cono animado en la dirección de avance + rastro del path recorrido), con toggle **"Vista LiDAR"** en el mapa; leyenda/etiqueta para el jurado ("LiDAR · SLAM run").
-  - Mantener legibles las 4 cosas del demo: mapa, AMRs, rutas, líneas.
-- [ ] **AMRs del mismo color en Realistic** (frontend · dueño: **Cursor**)
-  - En el mapa "realistic", todos los AMRs usan el **mismo color** (p. ej. rojo marca) → flota unificada (coherencia con branding y con la narrativa "una sola flota inteligente").
-  - El color por AMR (actual `getAmrColor(i)`) se mantiene para quito/guayaquil si conviene; en realistic → color único.
-- [ ] **Ajuste fino de animación**: sincronizar el sweep LiDAR con el LERP 60fps, sin romper estados/notices.
+- [x] **Ruta como sweep LiDAR** (frontend · dueño: **Cursor**)
+  - ✅ Hecho (commit 46a605a, 4-sep): PlantMap sweep LiDAR (rastro glow cian + cono/spotlight en dirección de avance + rayo + dash animado por simTime determinista) + toggle 📡 "LiDAR" en ControlPanel (estilo marca, default ON al seleccionar realistic) + leyenda "LiDAR · SLAM run". tsc EXIT 0.
+- [x] **AMRs del mismo color en Realistic** (frontend · dueño: **Cursor**)
+  - ✅ Hecho (commit 46a605a, 4-sep): `getAmrColor(i, plantId)` → NESTLE_FLEET_RED #E4032E unificado si plantId==="realistic"; paleta por índice intacta en quito/guayaquil; aros de estado semánticos sin cambio.
+- [ ] **Ajuste fino de animación**: sincronizar el sweep LiDAR con el LERP 60fps, sin romper estados/notices (verificación visual pendiente tras smoke test).
 
 ## 3) Cierre del demo (pitch 5 min)
 
+- [ ] **Flujo de negocio del paquete MP→Línea→Paletizado→Out** (backend · dueño: **Antigravity**)
+  - Req usuario 4-sep: "los paquetes del momento en que entra materia prima a la linea de produccion, sale a paletizaje en 20segundos para este MVP, de Paletizaje a Out y de Out termina el recorrido". Estado actual: la sim solo genera SUPPLY_REQUEST (MP→línea); "Out" es solo zona visual sin nodo. En curso (despachada 4-sep).
 - [ ] **Planta por defecto del arranque = "realistic"** (o la que el usuario elija) al levantar el stack Docker.
 - [ ] **Mini-guion pitch 5 min cronometrado** (0:00–5:00 + 2 min Q&A): abrir con el problema Nestlé, demo en vivo de realistic (LiDAR + flota unificada), métricas ROI, cierre con sostenibilidad/escalabilidad. Preguntas difíciles y respuestas preparadas.
 - [ ] **Smoke test final**: `docker compose up --build`, planta realistic, 1 min de sim sin errores, tsc EXIT 0.
@@ -44,10 +44,11 @@
 
 **Checklist rápida de estado**
 
-- [x] Branding rojo/blanco
-- [x] Huge eliminado
-- [x] Imagen realistic recibida
-- [x] realistic.json portado + registrado + seed
-- [ ] Ruta = LiDAR implementado
-- [ ] AMRs mismo color en realistic
+- [x] Branding rojo/blanco (109f819)
+- [x] Huge eliminado (109f819)
+- [x] Imagen realistic recibida (4-sep)
+- [x] realistic.json portado + registrado + seed (30fdd60)
+- [x] Ruta = LiDAR implementado (46a605a)
+- [x] AMRs mismo color en realistic (46a605a)
+- [ ] Flujo de negocio del paquete MP→Línea→Paletizado→Out (Antigravity, en curso)
 - [ ] Default+pitch listo

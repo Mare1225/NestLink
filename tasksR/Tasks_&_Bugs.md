@@ -14,6 +14,7 @@
 - [x] **Huge eliminado** (backend/datos) — hecho (commit `109f819`).
 - [x] **Imagen realistic recibida** — recibida 4-sep, copiada a `backend/app/data/maps/reference/` (2 jpgs).
 - [x] **realistic.json portado + registrado + seed** — hecho (commit `30fdd60`, 4-sep). 74 nodos/90 aristas/4 zonas/3 peatones, 5 AMRs; pytest 72/72; validado en vivo.
-- [ ] **Ruta = LiDAR implementado** — EN CURSO (Cursor, task despachada 4-sep).
-- [ ] **AMRs mismo color en realistic** — EN CURSO (Cursor).
+- [x] **Ruta = LiDAR implementado** — hecho (commit `46a605a`, 4-sep). Sweep LiDAR (rastro glow + cono/spotlight + pulso por simTime) con toggle 📡 en ControlPanel; default ON en realistic.
+- [x] **AMRs mismo color en realistic** — hecho (commit `46a605a`, 4-sep). Flota roja `#E4032E` unificada; aros de estado semánticos intactos; paleta por índice se mantiene en quito/guayaquil.
+- [ ] **Flujo de negocio del paquete: MP→Línea→Paletizado→Out→fin** (nuevo req usuario 4-sep) — "los paquetes del momento en que entra materia prima a la linea de produccion, sale a paletizaje en 20segundos para este MVP, de Paletizaje a Out y de Out termina el recorrido". Actualmente la sim solo genera SUPPLY_REQUEST (MP→línea) y "Out" es solo zona visual sin nodo. EN CURSO (Antigravity).
 - [ ] **Default + pitch** — pendiente.
