@@ -58,3 +58,7 @@
 - [x] Corrección layout realistic OUT/paredes/arista (5112bde)
 - [x] Flujo de negocio del paquete MP→Línea→Paletizado→Out→fin (2290d01)
 - [x] Default+pitch listo (default=cabeaa0 · pitch=pitch_5min.md)
+- [x] Feedback ronda 2 (b5b377b): X_T11↔OUT (no X_M02), WH_MP_5→X_R25 solo, WH_PT_3→X_M05, y **muros VISIBLES** (bug "los muros no existen aun") — capa `walls` en realistic.json + render negro en PlantMap, sin cruzar aristas. pytest 76/76, tsc EXIT 0.
+
+## Check-puntos pendientes / posibles ajustes (demo day)
+- [ ] Si el usuario ajusta la posición de los muros según su foto anotada → mover W1/W2 (o añadir más) en `realistic.json`. Por ahora 2 muros consistentes con la topología (W1 este del patio OUT x596 y70 h320; W2 oeste x440 y70 h230).
