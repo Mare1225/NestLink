@@ -56,7 +56,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 **Qué se ve:** 4 cards de impacto: productividad, seguridad, OUTs siempre disponibles, repo de planta configurable.
 
 **Qué decimos:**
-"Para las operaciones de Nestlé el valor es directo: más productividad porque los robots no se detienen y los puntos de salida están siempre disponibles; más seguridad, porque la flota detecta a las personas y evita colisiones — cero incidentes; y una réplica digital de la planta que se configura, no se reprograma: escalar a otra línea o a otro centro es cuestión de datos, no de desarrollo."
+"Para las operaciones de Nestlé el valor es directo: más productividad porque los robots no se detienen y los puntos de salida están siempre disponibles; más seguridad, porque la flota detecta a las personas y evita colisiones — cero incidentes; y una réplica digital de la planta que se configura, no se reprograma: escalar a otra línea o a otro centro es cuestión de datos, no de desarrollo. Esto no vende una máquina: vende productividad, seguridad y eficiencia medidas — más metros por hora de flota, menos riesgo operativo y menos energía por pallet."
 
 ---
 
@@ -65,7 +65,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 **Qué se ve:** Net Zero / uso eficiente de recursos + aportes medibles (paradas, energía, papel).
 
 **Qué decimos:**
-"La eficiencia también es sostenibilidad. Al evitar viajes en vacío, consumo de energía, piezas desgastadas; al eliminar paradas innecesarias, reducción de mermas. Son menos kilómetros recorridos, menos desperdicio y una operación más limpia, alineada con el compromiso Net Zero de Nestlé."
+"La eficiencia también es sostenibilidad. Al evitar viajes en vacío, consumo de energía, piezas desgastadas; al eliminar paradas innecesarias, reducción de mermas. Son menos kilómetros recorridos, menos desperdicio y una operación más limpia, alineada con el compromiso Net Zero de Nestlé. En una frase: hacemos más pallets con menos electricidad, menos horas y menos desperdicio — eficiencia de recursos con números, no con eslóganes."
 
 ---
 
@@ -74,7 +74,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 **Qué se ve:** Demostrable hoy (4-6 robots) → operación completa (10-15) → multi-centro; mapa de centro + KPI por réplica.
 
 **Qué decimos:**
-"Esto no queda en una planta. La misma arquitectura — percepción, controlador de misión, réplica digital — se replica en cualquier centro Nestlé: se ajustan los mapas, la cantidad de robots y el ritmo, y la operación se levanta igual. De demostrables hoy a una operación completa de diez o quince robots, y luego a varios centros con los mismos KPIs midiendo el mismo resultado."
+"Esto no queda en una planta. La misma arquitectura — percepción, controlador de misión, réplica digital — se replica en cualquier centro Nestlé: se ajustan los mapas, la cantidad de robots y el ritmo, y la operación se levanta igual. De demostrables hoy a una operación completa de diez o quince robots, y luego a varios centros con los mismos KPIs midiendo el mismo resultado. Porque lo que hoy corre para una planta es el mismo motor que mañana coordina un grupo de centros desde un solo tablero."
 
 ---
 
@@ -112,6 +112,7 @@ Las preguntas se responden sin support visual: se deja la lámina de Cierre (o l
 **Qué se ve:** Tabla humano/montacargas vs NestLink (exactitud, robustez, personas, escalabilidad) + ahorro por viaje.
 
 **Qué decimos:**
+(Transición: cerrada la demo y los datos, pasamos a la comparación con la operación humana.)
 "Y la comparación honesta. Un operador con montacargas es una persona que se cansa, puede olvidarse y tarda más; si un punto de entrega se descuida, tiende a complicar la operación. NestLink camina igual que la operación humana — los robots siguen la misma planta — pero sin cansancio, sin olvidos, con tolerancia a fallos, y cada viaje consolidado ahorra cerca de 0.14 kilómetros. Menos distancia, menos personas en tareas repetitivas, misma fábrica."
 
 ---
