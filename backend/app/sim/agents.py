@@ -50,10 +50,11 @@ class AMRAgent:
         self.loading_timer: float = 0.0
         self.idle_timer: float = 0.0
 
-    def assign_mission(self, mission: Tarea, G: nx.DiGraph) -> bool:
+    def assign_mission(self, mission: Tarea, G: nx.DiGraph, env: Optional[Any] = None) -> bool:
         """Asigna una misión al AMR. Retorna True si se encontró ruta válida."""
         target_dest = mission.destino if mission.tipo == "RELOCATION" else mission.origen
-        calc_path = find_shortest_path(G, self.posicion_nodo, target_dest, self.node_positions)
+        avoid_cb = (lambda u, v: any(u == rev_v and v == rev_u for (rev_u, rev_v, exp) in env.edge_reservations)) if (env and hasattr(env, 'edge_reservations')) else None
+        calc_path = find_shortest_path(G, self.posicion_nodo, target_dest, self.node_positions, avoid_opposite=avoid_cb)
 
         if not calc_path:
             # No hay ruta: rechazar misión para que no quede colgada
@@ -64,6 +65,8 @@ class AMRAgent:
         mission.amr_asignado = self.id
         self.idle_timer = 0.0
         self.path = calc_path
+        if env and hasattr(env, 'reserve_path'):
+            env.reserve_path(self, calc_path)
         self.target_node_idx = 1 if len(self.path) > 1 else 0
         self.estado = "MOVING_TO_PICKUP"
         return True
@@ -75,7 +78,8 @@ class AMRAgent:
         obstacles: List[Any],
         metrics_manager: Any,
         sim_time: float = 0.0,
-        generator_manager: Any = None
+        generator_manager: Any = None,
+        env: Optional[Any] = None
     ):
         # 1. Comprobar proximidad con peatones
         is_blocked_by_pedestrian = False
@@ -113,7 +117,10 @@ class AMRAgent:
                             generator_manager.drain_line_pickup(self.tarea_actual.origen, amount_pct=50.0)
 
                         self.tarea_actual.estado = "en_curso"
-                        self.path = find_shortest_path(G, self.posicion_nodo, self.tarea_actual.destino, self.node_positions) or [self.posicion_nodo]
+                        avoid_cb = (lambda u, v: any(u == rev_v and v == rev_u for (rev_u, rev_v, exp) in env.edge_reservations)) if (env and hasattr(env, 'edge_reservations')) else None
+                        self.path = find_shortest_path(G, self.posicion_nodo, self.tarea_actual.destino, self.node_positions, avoid_opposite=avoid_cb) or [self.posicion_nodo]
+                        if env and hasattr(env, 'reserve_path') and len(self.path) > 1:
+                            env.reserve_path(self, self.path)
                         self.target_node_idx = 1 if len(self.path) > 1 else 0
                         self.estado = "MOVING_TO_DELIVERY"
                 else:
@@ -160,9 +167,9 @@ class AMRAgent:
                     self.estado = "IDLE"
 
         elif self.estado in ["MOVING_TO_PICKUP", "MOVING_TO_DELIVERY", "REROUTING"]:
-            self._move_along_path(dt_sim, G)
+            self._move_along_path(dt_sim, G, env)
 
-    def _move_along_path(self, dt_sim: float, G: nx.DiGraph):
+    def _move_along_path(self, dt_sim: float, G: nx.DiGraph, env: Optional[Any] = None):
         # Si el estado es REROUTING pero ya tiene un path válido, reanudar movimiento
         if self.estado == "REROUTING" and self.path and self.target_node_idx < len(self.path):
             self.estado = "MOVING_TO_DELIVERY" if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
@@ -190,10 +197,49 @@ class AMRAgent:
             elif self.estado == "MOVING_TO_DELIVERY":
                 self.estado = "UNLOADING"
                 self.loading_timer = 2.0
+            elif self.estado == "WAITING":
+                # Si estaba en WAITING en buffer y la estación destino se desocupó, reanudar
+                dest = self.tarea_actual.destino if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else (self.tarea_actual.origen if self.tarea_actual else None)
+                if dest and env:
+                    other_at_dest = any(a.id != self.id and a.posicion_nodo == dest for a in getattr(env, 'amrs', []))
+                    if not other_at_dest:
+                        new_path = find_shortest_path(G, self.posicion_nodo, dest, self.node_positions)
+                        if new_path and len(new_path) > 1:
+                            self.path = new_path
+                            self.target_node_idx = 1
+                            self.estado = "MOVING_TO_DELIVERY" if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
             return
 
         next_node = self.path[self.target_node_idx]
         current_node = self.path[self.target_node_idx - 1] if self.target_node_idx > 0 else self.posicion_nodo
+
+        # Comprobar si el próximo paso es la estación de entrega y está ocupada por otro AMR
+        if env and next_node == self.path[-1] and (self.estado in ["MOVING_TO_DELIVERY", "MOVING_TO_PICKUP"]):
+            other_at_dest = any(a.id != self.id and a.posicion_nodo == next_node for a in getattr(env, 'amrs', []))
+            if other_at_dest:
+                from app.sim.routing import get_free_buffer_for_line
+                line_id = None
+                if self.tarea_actual:
+                    dest_str = self.tarea_actual.destino if self.tarea_actual.estado == "en_curso" else self.tarea_actual.origen
+                    if dest_str.startswith("L1") or dest_str.startswith("E1") or "linea1" in dest_str:
+                        line_id = "linea1"
+                    elif dest_str.startswith("L2") or dest_str.startswith("E2") or "linea2" in dest_str:
+                        line_id = "linea2"
+                    elif dest_str.startswith("L3") or dest_str.startswith("E3") or "linea3" in dest_str:
+                        line_id = "linea3"
+                if line_id and hasattr(env, 'layout_raw'):
+                    busy_nodes = {a.posicion_nodo for a in getattr(env, 'amrs', [])}
+                    free_buf = get_free_buffer_for_line(G, env.layout_raw, line_id, busy_nodes)
+                    if free_buf:
+                        buf_path = find_shortest_path(G, current_node, free_buf, self.node_positions)
+                        if buf_path:
+                            self.path = buf_path
+                            self.target_node_idx = 1 if len(buf_path) > 1 else 0
+                            return
+                    else:
+                        # Si todos los buffers están ocupados, esperar en la última ranura buffer (o donde esté) sin bloquear cruces
+                        self.estado = "WAITING"
+                        return
 
         if G.has_edge(current_node, next_node) and G[current_node][next_node].get("blocked", False):
             dest = self.tarea_actual.destino if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else (self.tarea_actual.origen if self.tarea_actual else self.path[-1])

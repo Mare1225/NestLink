@@ -28,8 +28,20 @@ class SimulationEnvironment:
         self.tick_id: int = 0
         self.notices: List[NoticeItem] = []
 
+        self.edge_reservations: set[tuple[str, str, float]] = set()
         self.bridge = ConnectionManager()
         self.init_plant(plant_id)
+
+    def reserve_path(self, amr: AMRAgent, path: List[str], horizon_sec: float = 15.0):
+        if not path or len(path) < 2:
+            return
+        expiry = self.sim_time + horizon_sec
+        for i in range(len(path) - 1):
+            u, v = path[i], path[i + 1]
+            self.edge_reservations.add((u, v, expiry))
+
+    def release_reservations(self, tick_time: float):
+        self.edge_reservations = {(u, v, exp) for (u, v, exp) in self.edge_reservations if exp > tick_time}
 
     def init_plant(self, plant_id: str):
         random.seed(42)
@@ -105,6 +117,9 @@ class SimulationEnvironment:
             # Limpiar avisos tras 15s simulados
             self.notices = [n for n in self.notices if (self.sim_time - n.sim_time) < 15.0]
 
+            # 0. Liberar reservas caducadas
+            self.release_reservations(self.sim_time)
+
             # 1. Demanda IoT y consumo continuo
             self.generator.step(dt_sim, self.mission_queue, self.sim_time, self.metrics)
 
@@ -125,7 +140,7 @@ class SimulationEnvironment:
             if idle_amrs and pending_missions:
                 assignments = compute_hungarian_assignment(idle_amrs, pending_missions, self.node_positions)
                 for amr, mission in assignments:
-                    success = amr.assign_mission(mission, self.G)
+                    success = amr.assign_mission(mission, self.G, env=self)
                     if not success:
                         # Si no pudo rutear, la misión permanece pendiente y el AMR sigue libre
                         mission.estado = "pendiente"
@@ -141,7 +156,7 @@ class SimulationEnvironment:
 
             # 5. Cinemática de AMRs (con callback a generator para restock y drain)
             for amr in self.amrs:
-                amr.step(dt_sim, self.G, active_obstacles, self.metrics, self.sim_time, self.generator)
+                amr.step(dt_sim, self.G, active_obstacles, self.metrics, self.sim_time, self.generator, env=self)
 
             # 6. Broadcast WS
             snapshot = self.get_snapshot()
@@ -151,6 +166,7 @@ class SimulationEnvironment:
             elapsed = asyncio.get_event_loop().time() - start_t
             sleep_time = max(0.01, self.TICK_INTERVAL_SEC - elapsed)
             await asyncio.sleep(sleep_time)
+
     def _amr_blocked_by_pedestrian(self, amr: AMRAgent, obstacles: List[Any]) -> bool:
         """Mismo criterio PEM que agents.step: peatón OPERATOR dentro del radio de seguridad."""
         for obs in obstacles:
@@ -211,6 +227,7 @@ class SimulationEnvironment:
         self.sim_time += dt_sim
         self.tick_id += 1
 
+        self.release_reservations(self.sim_time)
         self.notices = [n for n in self.notices if (self.sim_time - n.sim_time) < 15.0]
         self.generator.step(dt_sim, self.mission_queue, self.sim_time, self.metrics)
         self._auto_recharge_check()
@@ -227,7 +244,7 @@ class SimulationEnvironment:
         if idle_amrs and pending_missions:
             assignments = compute_hungarian_assignment(idle_amrs, pending_missions, self.node_positions)
             for amr, mission in assignments:
-                success = amr.assign_mission(mission, self.G)
+                success = amr.assign_mission(mission, self.G, env=self)
                 if not success:
                     mission.estado = "pendiente"
                     mission.amr_asignado = None
@@ -240,7 +257,7 @@ class SimulationEnvironment:
         self.check_freeze_timeouts()
 
         for amr in self.amrs:
-            amr.step(dt_sim, self.G, active_obstacles, self.metrics, self.sim_time, self.generator)
+            amr.step(dt_sim, self.G, active_obstacles, self.metrics, self.sim_time, self.generator, env=self)
 
     def stop(self):
         self.is_running = False

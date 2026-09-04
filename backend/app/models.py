@@ -14,6 +14,7 @@ EstadoAMR = Literal[
     "WAITING_OBSTACLE",
     "REROUTING",
     "CHARGING",
+    "WAITING",
     "ERROR"
 ]
 
@@ -25,7 +26,7 @@ TipoTarea = Literal["SUPPLY_REQUEST", "PICKUP_PT", "RECHARGE", "RELOCATION"]
 
 EstadoTarea = Literal["pendiente", "asignada", "en_curso", "completada"]
 
-TipoNodo = Literal["linea", "empacadora", "almacen", "cruce", "carga"]
+TipoNodo = Literal["linea", "empacadora", "almacen", "cruce", "carga", "buffer"]
 
 # --- Entidades de Estado en Tiempo Real (Snapshot WS) ---
 

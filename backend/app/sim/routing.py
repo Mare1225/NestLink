@@ -3,7 +3,7 @@
 
 import math
 import networkx as nx
-from typing import List,Dict,Tuple,Optional
+from typing import List,Dict,Tuple,Optional,Any
 
 def euclidean_heuristic(u: str, v: str, node_positions: Dict[str, Tuple[float, float]]) -> float:
     pos_u = node_positions.get(u, (0.0, 0.0))
@@ -13,23 +13,57 @@ def euclidean_heuristic(u: str, v: str, node_positions: Dict[str, Tuple[float, f
     dy = (pos_u[1] - pos_v[1]) / 10.0
     return math.sqrt(dx * dx + dy * dy) / 1.8
 
+def get_free_buffer_for_line(
+    G: nx.DiGraph,
+    layout: dict,
+    line_id: str,
+    busy_nodes: set
+) -> Optional[str]:
+    """
+    Devuelve el primer nodo type=="buffer" de layout['lines'][line_id]['buffer_nodes']
+    que NO esté en busy_nodes (orden estable).
+    """
+    lines = layout.get("lines", [])
+    target_line = None
+    for line in lines:
+        if line.get("id") == line_id:
+            target_line = line
+            break
+    if not target_line:
+        return None
+
+    buffer_nodes = target_line.get("buffer_nodes", [])
+    for b_node in buffer_nodes:
+        if b_node not in busy_nodes:
+            # Confirm standard node type if exists in G
+            if G.has_node(b_node):
+                if G.nodes[b_node].get("type") == "buffer":
+                    return b_node
+            else:
+                return b_node
+    return None
+
 def find_shortest_path(
     G: nx.DiGraph,
     source: str,
     target: str,
-    node_positions: Dict[str, Tuple[float, float]]
+    node_positions: Dict[str, Tuple[float, float]],
+    avoid_opposite: Optional[Any] = None
 ) -> Optional[List[str]]:
     """
     Encuentra la ruta A* más corta entre dos nodos ignorando aristas bloqueadas.
+    Soporta avoid_opposite: callable (u, v) -> bool. Si es True, penaliza la arista.
     """
     if source == target:
         return [source]
 
-    # Subgrafo de aristas no bloqueadas
     def weight_func(u, v, data):
         if data.get("blocked", False):
             return None  # Inaccesible
-        return data.get("weight", 1.0)
+        base_w = data.get("weight", 1.0)
+        if avoid_opposite and avoid_opposite(u, v):
+            base_w += 1000.0  # Penalización alta para evitar aristas reservadas en sentido opuesto
+        return base_w
 
     try:
         path = nx.astar_path(
@@ -73,7 +107,8 @@ def find_shortest_path_excluding_edge(
     exclude_edge: Tuple[str, str]
 ) -> Optional[List[str]]:
     """
-    Encuentra la ruta A* omitiendo temporalmente la arista exclude_edge y su contraparte.
+    Encuentra la ruta A* omitiendo la orientación u->v de exclude_edge.
+    Respetando la dirección si es unidireccional.
     No muta el grafo G global.
     """
     if source == target:
@@ -84,7 +119,7 @@ def find_shortest_path_excluding_edge(
     def weight_func(u, v, data):
         if data.get("blocked", False):
             return None
-        if (u == u_ex and v == v_ex) or (u == v_ex and v == u_ex):
+        if u == u_ex and v == v_ex:
             return None
         return data.get("weight", 1.0)
 
@@ -99,3 +134,4 @@ def find_shortest_path_excluding_edge(
         return path
     except (nx.NetworkXNoPath, nx.NodeNotFound):
         return None
+
