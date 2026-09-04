@@ -1,0 +1,253 @@
+# app/sim/agents.py
+# FSM y cinemática continua de la flota de AMRs Nestlé
+
+import math
+import networkx as nx
+from typing import List, Tuple, Dict, Any, Optional
+from app.models import AMRState, Tarea, EstadoAMR
+from app.sim.routing import find_shortest_path
+
+class AMRAgent:
+    def __init__(
+        self,
+        id_str: str,
+        nombre: str,
+        tipo: str = "pallet_lifter",
+        velocidad_ms: float = 1.5,
+        carga_kg: float = 500.0,
+        bateria_inicial: int = 100,
+        posicion_nodo: str = "CHARGER_1",
+        home_zone: Optional[str] = None,
+        node_positions: Dict[str, Tuple[float, float]] = None,
+        node_types: Dict[str, str] = None,
+        charger_resolver: Optional[Any] = None
+    ):
+        self.id = id_str
+        self.nombre = nombre
+        self.tipo = tipo
+        self.velocidad_ms = velocidad_ms
+        self.carga_kg = carga_kg
+        self.bateria = bateria_inicial
+        self.posicion_nodo = posicion_nodo
+        self.home_zone = home_zone
+        self.node_positions = node_positions or {}
+        self.node_types = node_types or {}
+        self.charger_resolver = charger_resolver
+        self.cediendo_paso = False
+        self._estado_desde = 0.0
+        self._last_estado = "IDLE" 
+
+        if posicion_nodo in self.node_positions:
+            self.x, self.y = self.node_positions[posicion_nodo]
+        else:
+            self.x, self.y = (400.0, 40.0)
+
+        self.angulo: float = 0.0
+        self.estado: EstadoAMR = "IDLE"
+        self.tarea_actual: Optional[Tarea] = None
+        self.path: List[str] = []
+        self.target_node_idx: int = 0
+        self.loading_timer: float = 0.0
+        self.idle_timer: float = 0.0
+
+    def assign_mission(self, mission: Tarea, G: nx.DiGraph) -> bool:
+        """Asigna una misión al AMR. Retorna True si se encontró ruta válida."""
+        target_dest = mission.destino if mission.tipo == "RELOCATION" else mission.origen
+        calc_path = find_shortest_path(G, self.posicion_nodo, target_dest, self.node_positions)
+
+        if not calc_path:
+            # No hay ruta: rechazar misión para que no quede colgada
+            return False
+
+        self.tarea_actual = mission
+        mission.estado = "asignada"
+        mission.amr_asignado = self.id
+        self.idle_timer = 0.0
+        self.path = calc_path
+        self.target_node_idx = 1 if len(self.path) > 1 else 0
+        self.estado = "MOVING_TO_PICKUP"
+        return True
+
+    def step(
+        self,
+        dt_sim: float,
+        G: nx.DiGraph,
+        obstacles: List[Any],
+        metrics_manager: Any,
+        sim_time: float = 0.0,
+        generator_manager: Any = None
+    ):
+        # 1. Comprobar proximidad con peatones
+        is_blocked_by_pedestrian = False
+        for obs in obstacles:
+            if obs.tipo == "OPERATOR":
+                dx = (obs.x - self.x) / 10.0
+                dy = (obs.y - self.y) / 10.0
+                dist_m = math.sqrt(dx * dx + dy * dy)
+                if dist_m < obs.radius:
+                    is_blocked_by_pedestrian = True
+                    break
+
+        if is_blocked_by_pedestrian or self.cediendo_paso:
+            if self.estado in ["MOVING_TO_PICKUP", "MOVING_TO_DELIVERY"]:
+                self.estado = "WAITING_OBSTACLE"
+            return
+        elif self.estado == "WAITING_OBSTACLE" and not self.cediendo_paso and not is_blocked_by_pedestrian:
+            self.estado = "MOVING_TO_DELIVERY" if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
+
+        # 2. FSM Transitions
+        if self.estado == "IDLE":
+            self.idle_timer += dt_sim
+
+        elif self.estado == "LOADING":
+            self.loading_timer -= dt_sim
+            if self.loading_timer <= 0:
+                if self.tarea_actual:
+                    if self.tarea_actual.tipo == "RELOCATION":
+                        self.tarea_actual.estado = "completada"
+                        self.tarea_actual = None
+                        self.estado = "IDLE"
+                    else:
+                        # Si recogió producto terminado en salida de línea, drenar pallet de la línea
+                        if self.tarea_actual.tipo == "PICKUP_PT" and generator_manager:
+                            generator_manager.drain_line_pickup(self.tarea_actual.origen, amount_pct=50.0)
+
+                        self.tarea_actual.estado = "en_curso"
+                        self.path = find_shortest_path(G, self.posicion_nodo, self.tarea_actual.destino, self.node_positions) or [self.posicion_nodo]
+                        self.target_node_idx = 1 if len(self.path) > 1 else 0
+                        self.estado = "MOVING_TO_DELIVERY"
+                else:
+                    self.estado = "IDLE"
+
+        elif self.estado == "UNLOADING":
+            self.loading_timer -= dt_sim
+            if self.loading_timer <= 0:
+                if self.tarea_actual:
+                    # Si entregó insumos a empacadora, RESTOCK visible de la línea
+                    if self.tarea_actual.tipo == "SUPPLY_REQUEST" and generator_manager:
+                        generator_manager.restock_line(self.tarea_actual.destino, amount_pct=20.0)
+
+                    self.tarea_actual.estado = "completada"
+                    duration_min = round((sim_time - self.tarea_actual.created_at_sim) / 60.0, 2)
+                    metrics_manager.record_trip_completed(
+                        duration_min=max(duration_min, 0.4),
+                        distance_km=0.32,
+                        was_empty_prevented=True
+                    )
+                    self.tarea_actual = None
+                self.estado = "IDLE"
+                self.path = []
+
+        elif self.estado == "CHARGING":
+            # REGLA ESTRICTA: Solo cargar si está físicamente en un nodo tipo 'carga'
+            is_at_charger = self.node_types.get(self.posicion_nodo) == "carga"
+            if not is_at_charger:
+                # Si no está en cargador, rutear al destino RECHARGE o resolver — nunca hardcode CHARGER_1
+                self.estado = "MOVING_TO_DELIVERY"
+                target_ch = self._resolve_charger_target()
+                self.path = find_shortest_path(G, self.posicion_nodo, target_ch, self.node_positions) or []
+                if self.path:
+                    self.target_node_idx = 1 if len(self.path) > 1 else 0
+                else:
+                    self.estado = "WAITING_OBSTACLE"
+            else:
+                self.bateria = min(100, int(self.bateria + 4.0 * dt_sim))
+                if self.bateria >= 98:
+                    self.bateria = 100
+                    if self.tarea_actual and self.tarea_actual.tipo == "RECHARGE":
+                        self.tarea_actual.estado = "completada"
+                        self.tarea_actual = None
+                    self.estado = "IDLE"
+
+        elif self.estado in ["MOVING_TO_PICKUP", "MOVING_TO_DELIVERY", "REROUTING"]:
+            self._move_along_path(dt_sim, G)
+
+    def _move_along_path(self, dt_sim: float, G: nx.DiGraph):
+        # Si el estado es REROUTING pero ya tiene un path válido, reanudar movimiento
+        if self.estado == "REROUTING" and self.path and self.target_node_idx < len(self.path):
+            self.estado = "MOVING_TO_DELIVERY" if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
+
+        # Consumo de batería: proporcional al tiempo en movimiento (Watt en tránsito)
+        self.bateria = max(0.0, self.bateria - 0.10 * dt_sim)
+
+        if not self.path or self.target_node_idx >= len(self.path):
+            self.posicion_nodo = self.path[-1] if self.path else self.posicion_nodo
+            
+            # Al llegar al destino final del path
+            if self.tarea_actual and self.tarea_actual.tipo == "RECHARGE":
+                # VALIDACIÓN CRÍTICA: Solo pasar a CHARGING si el nodo actual es tipo 'carga'
+                if self.node_types.get(self.posicion_nodo) == "carga":
+                    self.estado = "CHARGING"
+                    self.path = []
+                else:
+                    target_ch = self._resolve_charger_target()
+                    self.path = find_shortest_path(G, self.posicion_nodo, target_ch, self.node_positions) or [self.posicion_nodo]
+                    self.target_node_idx = 1 if len(self.path) > 1 else 0
+                    self.estado = "MOVING_TO_DELIVERY"
+            elif self.estado == "MOVING_TO_PICKUP":
+                self.estado = "LOADING"
+                self.loading_timer = 2.0
+            elif self.estado == "MOVING_TO_DELIVERY":
+                self.estado = "UNLOADING"
+                self.loading_timer = 2.0
+            return
+
+        next_node = self.path[self.target_node_idx]
+        current_node = self.path[self.target_node_idx - 1] if self.target_node_idx > 0 else self.posicion_nodo
+
+        if G.has_edge(current_node, next_node) and G[current_node][next_node].get("blocked", False):
+            dest = self.tarea_actual.destino if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else (self.tarea_actual.origen if self.tarea_actual else self.path[-1])
+            new_path = find_shortest_path(G, current_node, dest, self.node_positions)
+            if new_path and len(new_path) > 1:
+                self.path = new_path
+                self.target_node_idx = 1
+                self.estado = "MOVING_TO_DELIVERY" if (self.tarea_actual and self.tarea_actual.estado == "en_curso") else "MOVING_TO_PICKUP"
+            else:
+                self.estado = "REROUTING"
+            return
+
+        tx, ty = self.node_positions.get(next_node, (self.x, self.y))
+        dx = tx - self.x
+        dy = ty - self.y
+        dist = math.sqrt(dx * dx + dy * dy)
+
+        if dist > 0.1:
+            self.angulo = round(math.degrees(math.atan2(dy, dx)), 1)
+
+        step_dist = self.velocidad_ms * 10.0 * dt_sim
+
+        if dist <= step_dist:
+            self.x = tx
+            self.y = ty
+            self.posicion_nodo = next_node
+            self.target_node_idx += 1
+        else:
+            self.x += (dx / dist) * step_dist
+            self.y += (dy / dist) * step_dist
+
+    def _resolve_charger_target(self) -> str:
+        """Destino de recarga: misión RECHARGE → resolver → primer cargador del layout."""
+        if self.tarea_actual and self.tarea_actual.tipo == "RECHARGE" and self.tarea_actual.destino:
+            return self.tarea_actual.destino
+        if self.charger_resolver:
+            resolved = self.charger_resolver(self.id)
+            if resolved:
+                return resolved
+        chargers = [nid for nid, ntype in self.node_types.items() if ntype == "carga"]
+        return chargers[0] if chargers else "CHARGER_1"
+
+    def get_state(self) -> AMRState:
+        remaining_path = self.path[self.target_node_idx:] if self.path else []
+        return AMRState(
+            id=self.id,
+            nombre=self.nombre,
+            estado=self.estado,
+            x=round(self.x, 1),
+            y=round(self.y, 1),
+            angulo=self.angulo,
+            bateria=int(round(self.bateria)),
+            tarea_asignada=self.tarea_actual.id if self.tarea_actual else None,
+            path=remaining_path,
+            tipo=self.tipo,
+            cediendo_paso=self.cediendo_paso
+        )

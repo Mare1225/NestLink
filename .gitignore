@@ -1,27 +1,14 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-build/
-*.egg
-
-# Virtual environment
+node_modules/
+.next/
+out/
 .venv/
-venv/
-env/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Flask
-instance/
+__pycache__/
 *.pyc
+.pytest_cache/
+.env
+.env.local
+.DS_Store
+.quarto/
+logs/
+*.tsbuildinfo
+next-env.d.ts

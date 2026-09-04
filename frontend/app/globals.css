@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+
+  --nest-bg: #070a10;
+  --nest-bg-elevated: #0d1219;
+  --nest-panel: #111820;
+  --nest-panel-raised: #161d28;
+  --nest-border: rgba(255, 255, 255, 0.07);
+  --nest-border-strong: rgba(255, 255, 255, 0.12);
+  --nest-text: #eef2f7;
+  --nest-muted: #8b9aad;
+  --nest-accent: #5eb3ff;
+  --nest-accent-warm: #e8a54b;
+  --nest-green: #34d399;
+  --nest-red: #f87171;
+  --nest-amber: #fbbf24;
+
+  --nest-shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  --nest-shadow-glow: 0 0 40px rgba(94, 179, 255, 0.06);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--nest-bg);
+  color: var(--nest-text);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient shell — subtle depth without noise texture */
+.nest-shell {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(94, 179, 255, 0.07), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(232, 165, 75, 0.05), transparent 50%),
+    var(--nest-bg);
+}
+
+@layer components {
+  .nest-panel {
+    @apply rounded-xl border border-white/[0.07] bg-[#111820]/90 shadow-nest-panel backdrop-blur-sm;
+  }
+
+  .nest-panel-header {
+    @apply flex items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.02] px-3 py-2.5;
+  }
+
+  .nest-card {
+    @apply rounded-lg border border-white/[0.06] bg-white/[0.03] transition-colors duration-200;
+  }
+
+  .nest-card:hover {
+    @apply border-white/[0.1] bg-white/[0.05];
+  }
+
+  .nest-label {
+    @apply text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-nest-muted;
+  }
+
+  .nest-select {
+    @apply rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-sm text-nest-text
+      transition-colors focus:border-nest-accent/50 focus:outline-none focus:ring-2 focus:ring-nest-accent/20
+      disabled:opacity-50;
+  }
+
+  .nest-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium
+      transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .nest-btn-ghost {
+    @apply nest-btn border-white/[0.08] bg-white/[0.03] text-nest-muted hover:border-white/[0.14]
+      hover:bg-white/[0.06] hover:text-nest-text;
+  }
+
+  .nest-btn-primary {
+    @apply nest-btn border-nest-accent/[0.4] bg-nest-accent/[0.15] text-sky-200 hover:bg-nest-accent/[0.25]
+      hover:border-nest-accent/60;
+  }
+
+  .nest-btn-warm {
+    @apply nest-btn border-orange-500/[0.35] bg-orange-500/[0.12] text-orange-200 hover:bg-orange-500/20;
+  }
+
+  .nest-btn-success {
+    @apply nest-btn border-emerald-500/[0.35] bg-emerald-500/[0.12] text-emerald-200 hover:bg-emerald-500/20;
+  }
+
+  .nest-btn-danger {
+    @apply nest-btn border-red-500/[0.35] bg-red-500/[0.12] text-red-200 hover:bg-red-500/20;
+  }
+
+  .nest-btn-warning {
+    @apply nest-btn border-amber-500/[0.35] bg-amber-500/[0.12] text-amber-200 hover:bg-amber-500/20;
+  }
+
+  .nest-toolbar-group {
+    @apply flex flex-wrap items-center gap-1.5 rounded-xl border border-white/[0.07] bg-[#161d28] p-1.5;
+  }
+
+  .nest-toolbar-solid {
+    @apply flex flex-wrap items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#161d28] p-2;
+  }
+
+  .nest-hint {
+    @apply flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2;
+  }
+
+  .nest-hint-warm {
+    @apply nest-hint border-orange-500/30 bg-orange-950/80 text-orange-100/90;
+  }
+
+  .nest-hint-info {
+    @apply nest-hint border-sky-500/30 bg-sky-950/80 text-sky-100/90;
+  }
+
+  .nest-status-live {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10
+      px-2.5 py-0.5 text-[0.7rem] font-medium text-emerald-300;
+  }
+
+  .nest-status-offline {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10
+      px-2.5 py-0.5 text-[0.7rem] font-medium text-amber-300;
+  }
+
+  .nest-kpi-value {
+    @apply text-2xl font-semibold tabular-nums tracking-tight;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+  }
+}

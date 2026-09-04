@@ -1,94 +1,121 @@
-# Nestlé Planta Simulación
+# NestLink — Cerebro Orquestador Intralogístico (Reto 1 · Hackathon InnoLabs Nestlé)
 
-Simulación interactiva de intralogística para una planta Nestlé, construida con **Flask** + **JavaScript vanilla**.
+> **Tagline:** *El Waze + cerebro de Nestlé para que sus AMRs nunca vayan vacíos y sus líneas nunca paren.*
+> **Evento:** 4 sept · 8:30–18:30 · Salón Azul USFQ · Premio USD 1.000 · Equipo 2 devs (React + Python)
+> **Demo:** 100% software con datos simulados · Tick engine 5 Hz · WebSocket en vivo
 
-## Características
+NestLink orquesta una flota de 5 AMRs sobre el grafo de la planta: cola priorizada + asignación húngara + rutas A* con reruteo dinámico ante bloqueos y peatones. Todo visible en un dashboard en vivo (mapa 2D + kanban + gauges + ROI).
 
-- **Planta completa**: 120 × 80 m con 3 líneas de producción, zona de almacén y zona de despacho
-- **Grafo de navegación**: 504 nodos y 527 aristas con rutas alternativas y corredores de bypass
-- **Bloqueo de aristas (Edge Locking)**: cada segmento del grafo solo puede ser ocupado por un vehículo a la vez
-- **Pathfinding A\***: cálculo de rutas óptimas con recálculo automático ante bloqueos
-- **Sensores de proximidad**: detección de colisión basada en distancia con prioridad por tipo de vehículo
-- **5 vehículos**: 3 AMR Forklifts (1.5 m/s) y 2 Tuggers (0.9 m/s)
-- **API REST**: endpoints para consultar grafo, planta, vehículos y calcular rutas
-- **Visualización**: canvas HTML5 con zoom, temas claro/oscuro y estadísticas en tiempo real
+## Novedades y Capacidades del MVP (Ronda 5 Final)
 
-## Instalación
+- ⚡ **Rellenado Estratégico Dirigido por Objetivo (`POST /api/v1/sim/refill`):** Botón *«Rellenar 80% / TODAS»* que encadena misiones `SUPPLY_REQUEST` con **+20% por viaje** (~4 viajes por línea) hasta $\ge 80\%$.
+- ⟳ **Gestión de cola en vivo (R5.2):** Botón *«Reiniciar tareas»* (`POST /api/v1/sim/reset_missions`) y botones *«＋5 / −5 misiones»* (`POST /api/v1/sim/adjust_missions {delta: ±5}`) para mostrar la cola reactiva en demo.
+- 🔋 **Gestión Energética Realista y Autocarga Orgánica:** Consumo continuo de batería proporcional al tiempo en movimiento. Autocarga automática al alcanzar $\le 15\%$ o forzada mediante botón demo *«🔋 15% Batería»* (`POST /api/v1/sim/low_battery`), con **selección de cargador occupancy-aware** (reparte la flota entre `CHARGER_1`/`CHARGER_2` por ocupación + distancia real, sin amontonar todos en el mismo cargador) y validación de estado `CHARGING`.
+- 🏭 **Soporte Multi-Planta en Caliente:** Conmutación dinámica entre Planta Quito (22 nodos, 5 AMRs) y CD Guayaquil (27 nodos, 6 AMRs) mediante `GET /api/v1/plants` y `POST /api/v1/sim/select` sin pérdida de conexión WebSocket.
+- 🚦 **Ruteo Dinámico $A^*$ y Desvíos Inteligentes:** Bloqueo de aristas con derrames simulados (`POST /api/v1/obstacles/block`) y detección de operarios peatones con frenado de seguridad preventivo.
+- 🎯 **Algoritmo Húngaro con Afinidad de Zona (*Home-Zone*):** Despacho óptimo de flota asignando AMRs a sus líneas naturales para máxima coherencia visual y $\ge 4$ robots activos simultáneamente.
+- 🧪 **Suite Completa de 27 Tests Automatizados (100% Verdes):** Cobertura total de modelos, grafos, endpoints REST, WebSocket, FSM de AMRs, recarga, restock y multi-planta.
+- 🐳 **Docker Compose Integral (`compose.yml`):** Orquestación lista para producción con servicios `api` y `web`, healthchecks automáticos y build arguments para entorno Next.js.
 
+## Stack
+
+| Capa | Tec |
+|------|-----|
+| Frontend | Next.js 14 (App Router) + Tailwind + Recharts + Framer Motion |
+| Backend | Python 3.11 + FastAPI + Uvicorn · networkx (A*) · scipy (húngaro) · websockets |
+| Tiempo real | WebSocket `/ws` snapshots 5 Hz + LERP 60 fps en front · Fallback offline (`demoEngine`) |
+| Datos | `plant_layout.json` (22 nodos, 30 aristas, 2 peatones) + `seed.json` (4 líneas, 5 AMRs) |
+
+## Estructura real
+
+```
+Hackathon_InnoLabs_MVP_Plan/
+├── README.md
+├── PLAN_COMPLETO_NestLink.md        # plan integral del MVP
+├── PLAN_COMPLETO_MVP.md / NestLink_Reto1.md / 02_NestScan_VisionTwin_Reto2.md
+├── backend/
+│   ├── requirements.txt
+│   ├── app/
+│   │   ├── main.py                  # FastAPI + lifespan (tick engine)
+│   │   ├── api.py                   # REST /api/v1/* + WS /ws
+│   │   ├── models.py                # Pydantic (Snapshot, AMR, Tarea, etc.)
+│   │   ├── data_maps.py             # carga layout → DiGraph
+│   │   ├── metrics.py               # KPIs
+│   │   ├── app/data/maps/plant_layout.json
+│   │   ├── app/data/seeds/seed.json
+│   │   └── sim/
+│   │       ├── env.py               # loop 5 Hz
+│   │       ├── routing.py           # A* (networkx)
+│   │       ├── assignment.py        # húngaro (scipy)
+│   │       ├── agents.py            # FSM AMR
+│   │       ├── generators.py        # consumo líneas → misiones
+│   │       ├── obstacles.py         # peatones + bloqueos
+│   │       └── bridge.py            # ConnectionManager WS
+│   └── tests/
+│       ├── test_smoke.py
+│       └── test_api_integration.py
+├── frontend/
+│   ├── app/ (layout.tsx, page.tsx, globals.css)
+│   ├── components/ (PlantMap, KanbanPanel, LineGauges, KpiBar, ControlPanel, Dashboard, Header, TrendsPanel)
+│   ├── hooks/ (useSimulation, useLayout)
+│   ├── lib/ (api.ts, types.ts, config.ts, demoEngine.ts, amrColors.ts)
+│   ├── public/maps/plant_layout.json  # copia para render del mapa
+│   ├── next.config.mjs / tailwind.config.ts / tsconfig.json / package.json
+│   └── .next/ (build)
+├── prototype/
+│   └── index.html                   # prototipo HTML previo
+└── docs/
+    ├── API_CONTRATO.md              # contrato Front↔Back (snapshot + endpoints)
+    ├── 03_Simulacion_Intralogistica_NestLink.md
+    ├── GUIA_EJECUCION_Y_DEMO.md
+    ├── MEJORAS_PROPUESTAS.md
+    └── MEJORAS_UI_ROUTING.md        # emojis de carga/batería + animación de rutas
+```
+
+## Cómo levantar (local)
+
+**Backend** (http://localhost:8000):
 ```bash
-# Clonar repositorio
-git clone <url-del-repo>
-cd nestle-sim-flask
-
-# Crear entorno virtual
-python3 -m venv .venv
-source .venv/bin/activate   # Linux/macOS
-# .venv\Scripts\activate    # Windows
-
-# Instalar dependencias
+cd backend
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+# docs: http://localhost:8000/docs
 ```
 
-## Ejecución
-
+**Frontend** (http://localhost:3000):
 ```bash
-python app.py
+cd frontend
+npm install
+# opcional: NEXT_PUBLIC_API_URL=http://localhost:8000  (por defecto ese)
+npm run dev
 ```
 
-Abrir [http://localhost:5000](http://localhost:5000) en el navegador.
+> Ambos deben correr a la vez. El front conecta por WS a `NEXT_PUBLIC_API_URL/ws`. Si el back no está, el front entra en **modo offline** (demoEngine con datos pre-grabados, sin perder la demo).
 
-## Estructura del proyecto
+## Endpoints clave
 
+| Método | Ruta | Qué hace |
+|--------|------|----------|
+| GET | `/health` | healthcheck + tick |
+| GET | `/api/v1/layout` | layout canónico |
+| GET | `/api/v1/fleet` · `/api/v1/missions` · `/api/v1/metrics` | flota, misiones, KPIs |
+| POST | `/api/v1/obstacles/block` `{"from","to","tipo"}` | bloquea arista y rerutea |
+| POST | `/api/v1/obstacles/unblock` `{"from","to"}` | desbloquea |
+| POST | `/api/v1/sim/peak` `{"line_id","drain_pct"}` | inyecta pico de demanda |
+| WS | `/ws` | snapshots 5 Hz (`sim_time, tick_id, amrs, lines, obstacles, kpis`) |
+
+## Docker (alternativa con un comando)
+
+Cuando `compose.yml` esté disponible (lo crea Antigravity):
+```bash
+docker compose up --build
+# front en http://localhost:3000, back en http://localhost:8000
 ```
-nestle-sim-flask/
-├── app.py                    # Servidor Flask — punto de entrada
-├── config.py                 # Configuración de planta, vehículos, sensores
-├── requirements.txt          # Dependencias Python
-├── models/
-│   ├── __init__.py
-│   ├── grafo.py              # Grafo de navegación, A*, estadísticas
-│   ├── planta.py             # Layout de la planta y zonas
-│   └── vehiculos.py          # Tipos de vehículos y flota
-├── static/
-│   ├── css/
-│   │   └── style.css         # Estilos de la interfaz
-│   └── js/
-│       ├── data.js           # Datos del grafo (504 nodos, 527 aristas)
-│       ├── pathfinding.js    # Algoritmo A* (cliente)
-│       ├── vehiculos.js      # Lógica de vehículos, edge locking, sensores
-│       ├── render.js         # Renderizado del canvas
-│       └── main.js           # UI, controles y loop de animación
-└── templates/
-    └── index.html            # Template principal (Jinja2)
-```
+`NEXT_PUBLIC_API_URL` se inyecta como build ARG del frontend; ver `.env.example`.
 
-## API REST
+## Variables de entorno
 
-| Endpoint | Descripción |
-|----------|-------------|
-| `GET /` | Página principal con la simulación |
-| `GET /api/grafo` | Datos completos del grafo (nodos, aristas, pesos) |
-| `GET /api/grafo/stats` | Estadísticas del grafo |
-| `GET /api/planta` | Layout de la planta (zonas, dimensiones) |
-| `GET /api/vehiculos` | Configuración de vehículos y flota |
-| `GET /api/ruta/<inicio>/<destino>` | Calcula ruta A* entre dos nodos |
-| `GET /api/info` | Información general de la simulación |
+Copiar `.env.example` → `.env.local` (no commitear). Variables clave: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`, `PUERTO_BACK/FRONT`. `SIM_SPEED_FACTOR` y `SIM_SEED` están hardcodeados en `backend/app/sim/env.py` (4.0 / 42); si el backend los expone por env, documentarlos en `.env.example`.
 
-## Controles de la simulación
-
-| Control | Acción |
-|---------|--------|
-| Pausa | Pausa/reanuda la simulación |
-| Grafo | Muestra/oculta el grafo de navegación |
-| Velocidad (slider) | Ajusta de 1× a 20× |
-
-## Tecnologías
-
-- **Backend**: Python 3, Flask
-- **Frontend**: HTML5 Canvas, JavaScript vanilla, CSS custom properties
-- **Tipografía**: Inter + JetBrains Mono (Google Fonts)
-- **Algoritmos**: A* pathfinding, edge locking, sensores de proximidad
-
-## Licencia
-
-Proyecto académico — USFQ.
+Contrato completo en `docs/API_CONTRATO.md`. Guía de demo en `docs/GUIA_EJECUCION_Y_DEMO.md`.
