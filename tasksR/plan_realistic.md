@@ -42,6 +42,9 @@
 
 ---
 
+- [x] **Flujo de negocio del paquete MP→Línea→Paletizado→Out** (backend · dueño: **Deep**)
+  - ✅ Hecho (commit 2290d01, 4-sep): EXPEDITION (tipo aditivo), línea con acumulador 20 s genera PICKUP_PT Línea→WH_PT cada ~20 s con insumo; al entregar en Paletizado se encadena EXPEDITION WH_PT→OUT (fin del recorrido, sin misión posterior). pytest 76/76; en vivo realistics mostró 7 SUPPLY + 6 PICKUP_PT + 6 EXPEDITION a OUT.
+
 **Checklist rápida de estado**
 
 - [x] Branding rojo/blanco (109f819)
@@ -50,5 +53,6 @@
 - [x] realistic.json portado + registrado + seed (30fdd60)
 - [x] Ruta = LiDAR implementado (46a605a)
 - [x] AMRs mismo color en realistic (46a605a)
-- [ ] Flujo de negocio del paquete MP→Línea→Paletizado→Out (Antigravity, en curso)
+- [x] Corrección layout realistic OUT/paredes/arista (5112bde)
+- [x] Flujo de negocio del paquete MP→Línea→Paletizado→Out→fin (2290d01)
 - [ ] Default+pitch listo
