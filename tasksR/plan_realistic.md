@@ -1,27 +1,26 @@
 # 📋 Plan: mapa "realistic" (dibujado a mano) + nueva ronda de cambios
 
-> Estado: **DRAFT** — a la espera de la imagen del mapa que el usuario proporcionará.
+> Estado: **IMAGEN RECIBIDA (4-sep)** — port de realistic en curso.
 > Se marca ✅ cada ítem al completarse. Este archivo es el coordinador de la ronda (lead: Aion CLI).
 
 ## 0) Cambios de fondo (ya autorizados, pueden arrancar ya)
 
-- [ ] **Branding Nestlé — Rojo + Blanco** (frontend · dueño: **Cursor**)
-  - Convertir el tema oscuro actual (tokens `--nest-*` en `frontend/app/globals.css`, `tailwind.config.ts`, hardcodes `#0d1219`/`#111820`/`border-white/…`) a un tema de marca: superficies BLANCO + acentos ROJO Nestlé (familia `#E4032E`/`#D6001C`).
-  - Incluye: Header/logo, badges, botones, paneles, tarjetas, barra flotante, toasts, modales, controles. Mantener el MAPA tipo blueprint (Canvas) intacto y legible (modo denso + spriteK sin tocar).
-- [ ] **Eliminar planta "huge"** (backend/datos · dueño: **OpenCode**)
-  - Quitar `"huge"` de `PLANT_CONFIGS` en `backend/app/data_maps.py`.
-  - Borrar `backend/app/data/maps/huge.json` y `backend/app/data/seeds/seed_huge.json` (y `backend/scripts/convert_huge.py`).
-  - Ajustar `backend/tests/test_round10.py` (usa `SimulationEnvironment("huge")` en línea 37 → cambiar a `quito`/fixture) para que **pytest siga verde** (64/64).
-  - Verificar que `/api/v1/plants` ya NO liste huge y que el default siga `quito`.
+- [x] **Branding Nestlé — Rojo + Blanco** (frontend · dueño: **Cursor**)
+  - ✅ Hecho (commit 109f819): tema claro marca, rojo `#E4032E`, superficies blancas; PlantMap intacto, tsc EXIT 0.
+- [x] **Eliminar planta "huge"** (backend/datos · dueño: **OpenCode**)
+  - ✅ Hecho (commit 109f819): fuera de PLANT_CONFIGS, borrados huge.json/seed_huge/convert_huge, test_round10 ajustado, /plants sin huge, default quito, pytest 64/64.
 
 ## 1) Mapa "realistic" (lo que viene)
 
-- [ ] **Recibir la imagen del mapa dibujado a mano** (input del usuario)
-  - Guardar la imagen de referencia en el repo (p. ej. `backend/app/data/maps/reference_realistic.png` o `reference/`) para trazabilidad.
+- [x] **Recibir la imagen del mapa dibujado a mano** (input del usuario)
+  - ✅ Recibido 4-sep (2 archivos). Copiados al repo para trazabilidad en `backend/app/data/maps/reference/`:
+    - `realistic_grafo_nodos.jpg` (1539×1150) — el mapa con el GRAFO dibujado en ROJO.
+    - `realistic_presentacion.jpg` (1518×1149) — el mapa para la presentación.
 - [ ] **Portar el dibujo → layout JSON `realistic.json`** (backend/datos · dueño: **OpenCode**)
-  - Digitalizar sobre la imagen: canvas W/H, nodos semánticos, pasillos uni/bi, zonas con etiquetas, líneas (con `buffer_nodes`), cargadores, peatones, puntos buffer.
+  - Digitalizar sobre la imagen (`realistic_grafo_nodos.jpg`): canvas W/H, nodos semánticos, pasillos uni/bi, zonas con etiquetas, líneas (con `buffer_nodes`), cargadores, puntos buffer.
+  - ⚠️ **Requisito del usuario (peatones):** el GRAFO DIBUJADO EN ROJO define por dónde camina un humano de forma ALEATORIA (peatón recorriendo nodos del grafo rojo). Además, ENTRE MATERIA PRIMA y PALETIZAJE también caminan humanos → definir rutas de peatones que crucen ese pasillo (zona entre almacén MP y paletizado/empacadoras). Incluir en realistic.json y/o seed la definición de peatones/rutas para que la simulación los modele como en las otras plantas.
   - Reusar la mecánica de `convert_huge.py` como plantilla (aliases core `WH_MP_*`, `WH_PT_*`, `L*_OUT`, `E*_IN`; guarda de alcanzabilidad).
-- [ ] **Registrar "realistic" en `PLANT_CONFIGS`** + `seed_realistic.json` (3-4 líneas SKU Nestlé, 4-6 AMRs con `home_zone` válido).
+- [ ] **Registrar "realistic" en `PLANT_CONFIGS`** + `seed_realistic.json` (3-4 líneas SKU Nestlé, 4-6 AMRs con `home_zone` válido — NO operativo, ver fix de waiting v2).
 - [ ] **Validación backend**: boot 180+ ticks sin errores, `select_plant("realistic")`, snapshot, `pytest` suite completa verde.
 
 ## 2) Narrativa pitch: la ruta = LiDAR del AMR 🚚✨
@@ -46,9 +45,9 @@
 
 **Checklist rápida de estado**
 
-- [ ] Branding rojo/blanco
-- [ ] Huge eliminado
-- [ ] Imagen realistic recibida
+- [x] Branding rojo/blanco
+- [x] Huge eliminado
+- [x] Imagen realistic recibida
 - [ ] realistic.json portado + registrado + seed
 - [ ] Ruta = LiDAR implementado
 - [ ] AMRs mismo color en realistic
