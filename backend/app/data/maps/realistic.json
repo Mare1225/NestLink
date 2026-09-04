@@ -70,8 +70,8 @@
     },
     {
       "id": "WH_MP_5",
-      "x": 780,
-      "y": 400,
+      "x": 860,
+      "y": 300,
       "type": "almacen",
       "label": "WH_MP_5"
     },
@@ -91,8 +91,8 @@
     },
     {
       "id": "WH_PT_3",
-      "x": 760,
-      "y": 420,
+      "x": 400,
+      "y": 300,
       "type": "almacen",
       "label": "WH_PT_3"
     },
@@ -1222,7 +1222,7 @@
     },
     {
       "from": "WH_PT_3",
-      "to": "X_R18",
+      "to": "X_M05",
       "length": 8,
       "max_speed": 1.5,
       "direction": "bi",
@@ -1230,15 +1230,15 @@
     },
     {
       "from": "WH_MP_5",
-      "to": "X_R22",
+      "to": "X_R25",
       "length": 8,
       "max_speed": 1.5,
       "direction": "bi",
       "blocked": false
     },
     {
-      "from": "OUT",
-      "to": "X_M02",
+      "from": "X_T11",
+      "to": "OUT",
       "length": 12,
       "max_speed": 1.5,
       "direction": "bi",
@@ -1285,6 +1285,26 @@
       "w": 100,
       "h": 280,
       "color": "#fef9c3"
+    }
+  ],
+  "walls": [
+    {
+      "id": "W1",
+      "x": 596,
+      "y": 70,
+      "w": 8,
+      "h": 320,
+      "label": "Muro este (OUT/zona R)",
+      "color": "#1f2937"
+    },
+    {
+      "id": "W2",
+      "x": 440,
+      "y": 70,
+      "w": 8,
+      "h": 230,
+      "label": "Muro oeste (columna M/OUT)",
+      "color": "#1f2937"
     }
   ],
   "lines": [

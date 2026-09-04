@@ -163,8 +163,9 @@ class TestRound13PackageBusinessFlow(unittest.TestCase):
             self.assertEqual(path[0], wh)
             self.assertEqual(path[-1], "OUT")
 
-        # OUT tiene a X_M02 como único vecino en el grafo
-        self.assertEqual(list(self.env.G.successors("OUT")), ["X_M02"])
+        # OUT se conecta por su vertical al anillo superior (X_T11) — feedback usuario:
+        # "El nodo T11 va a OUT, no M02".
+        self.assertEqual(list(self.env.G.successors("OUT")), ["X_T11"])
 
 
 if __name__ == "__main__":

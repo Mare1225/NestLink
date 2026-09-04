@@ -301,6 +301,40 @@ export function PlantMap({
       }
     }
 
+    // Muros/paredes físicas (no transpirables) — dibujados como barras sólidas oscuras
+    // justo debajo de aristas/nodos para que se vean como obstáculos reales del piso.
+    const walls = layout.walls;
+    if (walls && walls.length > 0) {
+      for (const wl of walls) {
+        try {
+          const tl = toScreen(wl.x, wl.y);
+          const br = toScreen(wl.x + wl.w, wl.y + wl.h);
+          const wx = Math.min(tl.x, br.x);
+          const wy = Math.min(tl.y, br.y);
+          const ww = Math.max(1, Math.abs(br.x - tl.x));
+          const wh = Math.max(1, Math.abs(br.y - tl.y));
+          ctx.save();
+          ctx.fillStyle = wl.color || "#1f2937";
+          ctx.fillRect(wx, wy, ww, wh);
+          // brillo superior para dar volumen a la pared
+          ctx.strokeStyle = "rgba(255,255,255,0.25)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(wx + 0.5, wy + 0.5, ww - 1, wh - 1);
+          if (wl.label && !dense) {
+            const fontPx = Math.max(9, Math.min(ww / 4, 20));
+            ctx.fillStyle = "#ffffff";
+            ctx.font = `bold ${fontPx}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(wl.label, wx + ww / 2, wy + wh / 2);
+          }
+          ctx.restore();
+        } catch {
+          // Muro malformado — no tumbar el rAF
+        }
+      }
+    }
+
     layout.edges.forEach((e: LayoutEdge) => {
       const na = nodeById.get(e.from);
       const nb = nodeById.get(e.to);

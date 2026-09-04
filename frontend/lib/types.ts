@@ -144,6 +144,17 @@ export interface LayoutZone {
   color: string;
 }
 
+/** Muro/pared física (no transpirable para AMRs ni humanos). Rect estrecho en coords de layout. */
+export interface LayoutWall {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label?: string;
+  color?: string;
+}
+
 /** Metadatos de línea de producción (opcional; consumido si backend lo envía). */
 export interface LayoutLine {
   id: string;
@@ -164,6 +175,8 @@ export interface PlantLayout {
   /** Capas de fondo opcionales — impermeable si ausente/vacío */
   zones?: LayoutZone[];
   lines?: LayoutLine[];
+  /** Muros/paredes físicas (no transpirables) — dibujados solid negro, impermeable si ausente/vacío */
+  walls?: LayoutWall[];
   /** Zoom de vista por layout (1 = full-fit). <1 reduce el tamaño aparente del mapa (p.ej. 0.7 en plantas densas). */
   viewScale?: number;
 }
