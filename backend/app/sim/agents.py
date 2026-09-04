@@ -143,6 +143,32 @@ class AMRAgent:
                     if self.tarea_actual.tipo == "SUPPLY_REQUEST" and generator_manager:
                         generator_manager.restock_line(self.tarea_actual.destino, amount_pct=20.0)
 
+                    # Ronda 13: Paletizado → OUT. Al entregar PT en Paletizado (WH_PT_*), se
+                    # encadena una misión EXPEDITION (WH_PT → OUT). Entregar en OUT completa el
+                    # recorrido del paquete y NO encadena nada más (fin del recorrido).
+                    if (
+                        self.tarea_actual.tipo == "PICKUP_PT"
+                        and self.tarea_actual.destino.startswith("WH_PT")
+                        and env
+                        and "OUT" in getattr(env, "node_positions", {})
+                    ):
+                        already_exp = any(
+                            m for m in env.mission_queue.get_all_missions()
+                            if m.tipo == "EXPEDITION"
+                            and m.origen == self.tarea_actual.destino
+                            and m.estado in ["pendiente", "asignada", "en_curso"]
+                        )
+                        if not already_exp:
+                            env.mission_queue.add_mission(
+                                tipo="EXPEDITION",
+                                origen=self.tarea_actual.destino,
+                                destino="OUT",
+                                prioridad=6,
+                                peso_kg=480.0,
+                                sim_time=sim_time
+                            )
+                            env.add_notice("INFO", None, f"Pallet de {self.tarea_actual.destino} expedido a OUT (fin del recorrido)")
+
                     self.tarea_actual.estado = "completada"
                     duration_min = round((sim_time - self.tarea_actual.created_at_sim) / 60.0, 2)
                     metrics_manager.record_trip_completed(

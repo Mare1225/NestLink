@@ -22,7 +22,7 @@ TipoAMR = Literal["pallet_lifter", "towing_tug", "unit_load"]
 
 TipoObstaculo = Literal["OPERATOR", "SPILL", "BLOCK"]
 
-TipoTarea = Literal["SUPPLY_REQUEST", "PICKUP_PT", "RECHARGE", "RELOCATION"]
+TipoTarea = Literal["SUPPLY_REQUEST", "PICKUP_PT", "RECHARGE", "RELOCATION", "EXPEDITION"]
 
 EstadoTarea = Literal["pendiente", "asignada", "en_curso", "completada"]
 

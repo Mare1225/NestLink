@@ -52,6 +52,9 @@ def resolve_pt_destination(line_id: str, line_nombre: str) -> str:
     return "WH_PT_1"
 
 class ProductionLine:
+    # Ronda 13: tiempo de proceso de la línea (~20 s) antes de emitir el PICKUP_PT a Paletizado
+    LINE_PROCESS_TIME_SEC: float = 20.0
+
     def __init__(self, id_str: str, nombre: str, material: str, tasa_kg_min: float, umbral_critico_pct: float, nivel_inicial_pct: float):
         self.id = id_str
         self.nombre = nombre
@@ -65,6 +68,8 @@ class ProductionLine:
         self.factor_drenaje = 1.1
         self.peak_multiplier = 1.0
         self.peak_duration_sec = 0.0
+        # Ronda 13: acumulador determinista de tiempo de proceso del lote actual
+        self.processing_secs: float = 0.0
 
     def inject_peak(self, multiplier: float = 3.0, duration_sec: float = 300.0, drain_pct: float = 30.0):
         self.peak_multiplier = multiplier
@@ -89,6 +94,31 @@ class ProductionLine:
 
         # Consumo continuo de insumos
         self.nivel_pct = max(0.0, self.nivel_pct - rate_per_sec * self.factor_drenaje * dt_sim)
+
+        # Ronda 13: Línea → Paletizado (~20 s de proceso). Mientras haya insumo, se acumula
+        # tiempo de proceso y, al cumplirse los 20 s, se encadena una misión PICKUP_PT
+        # (Línea → WH_PT de la marca) para que un AMR lleve el PT a Paletizado.
+        if self.nivel_pct > 0.0:
+            self.processing_secs += dt_sim
+            if self.processing_secs >= self.LINE_PROCESS_TIME_SEC:
+                self.processing_secs = 0.0
+                if self.nivel_pct >= 15.0:
+                    pending_pt = [
+                        m for m in mission_queue.get_all_missions()
+                        if m.tipo == "PICKUP_PT"
+                        and m.origen == self.id
+                        and m.estado in ["pendiente", "asignada", "en_curso"]
+                    ]
+                    if not pending_pt:
+                        pt_dest = resolve_pt_destination(self.id, self.nombre)
+                        mission_queue.add_mission(
+                            tipo="PICKUP_PT",
+                            origen=self.id,
+                            destino=pt_dest,
+                            prioridad=7,
+                            peso_kg=480.0,
+                            sim_time=sim_time
+                        )
 
         # Refill dirigido: encadena SUPPLY_REQUEST hasta alcanzar el objetivo de insumos (≥80%)
         if self.nivel_pct < self.refill_target_pct:
