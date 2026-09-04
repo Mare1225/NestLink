@@ -31,6 +31,8 @@ interface AmrSim {
   segIdx: number;
   t: number;
   speed: number;
+  dir: 1 | -1; // ping-pong en rutas: evita teletransporte al cerrar el lazo
+  waitTicks: number; // paciencia anti-atasco ante peatones (≈1.6 s)
 }
 
 export class DemoEngine {
@@ -211,7 +213,9 @@ export class DemoEngine {
         path,
         segIdx: 0,
         t: 0,
-        speed: 0.00035 + this.rng() * 0.00015,
+        speed: 28 + this.rng() * 12, // px/s reales de navegación (pacing visual del modo offline)
+        dir: 1,
+        waitTicks: 0,
       };
     });
   }
@@ -224,7 +228,7 @@ export class DemoEngine {
         waypoints: p.waypoints,
         wpIdx: 0,
         t: 0,
-        speed: (p.speed / 10) * 0.004,
+        speed: (p.speed / 10) * 9, // px/s reales (peatones ~8-9, visibles y que dejan pasar a los AMR)
         radius: p.radius,
         x: start.x,
         y: start.y,
@@ -532,8 +536,13 @@ export class DemoEngine {
       }
     }
 
+    let toIdx = sim.segIdx + sim.dir;
+    if (toIdx < 0 || toIdx > sim.path.length - 1) {
+      sim.dir = (sim.dir * -1) as 1 | -1; // invertir en el extremo para no salir del path
+      toIdx = sim.segIdx + sim.dir;
+    }
     const fromId = sim.path[sim.segIdx];
-    const toId = sim.path[(sim.segIdx + 1) % sim.path.length];
+    const toId = sim.path[toIdx];
     if (this.isBlocked(fromId, toId)) {
       if (sim.def.estado !== "CHARGING") sim.def.estado = "REROUTING";
       sim.path = this.routeFor(sim);
@@ -552,10 +561,13 @@ export class DemoEngine {
         break;
       }
     }
-    if (nearPed) {
+    if (nearPed && sim.waitTicks < 8) {
+      // Paciencia anti-atasco: espera razonable (~1.6 s reales) y luego avanza con cuidado
+      sim.waitTicks += 1;
       if (sim.def.estado !== "CHARGING") sim.def.estado = "WAITING_OBSTACLE";
       return;
     }
+    sim.waitTicks = 0;
 
     if (sim.def.estado === "CHARGING") {
       // Mantener CHARGING mientras se dirige al cargador
@@ -565,10 +577,16 @@ export class DemoEngine {
       sim.def.estado = "MOVING_TO_DELIVERY";
     }
 
-    sim.t += sim.speed;
+    // Normalizar por longitud del tramo: `speed` es en px/s real (TICK_MS=0.2 s)
+    const segLen = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    sim.t += (sim.speed * 0.2) / segLen;
     if (sim.t >= 1) {
       sim.t = 0;
-      sim.segIdx = (sim.segIdx + 1) % sim.path.length;
+      // Ping-pong: al llegar a un extremo invierte la dirección para no teletransportarse
+      if (sim.segIdx + sim.dir < 0 || sim.segIdx + sim.dir > sim.path.length - 1) {
+        sim.dir = (sim.dir * -1) as 1 | -1;
+      }
+      sim.segIdx += sim.dir;
       if (this.rng() < 0.02 && sim.def.tarea_asignada) {
         const m = this.missions.find((x) => x.id === sim.def.tarea_asignada);
         if (m) m.estado = "completada";
@@ -583,7 +601,14 @@ export class DemoEngine {
     sim.def.y = from.y + (to.y - from.y) * t;
     sim.def.angulo =
       (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
-    sim.def.path = sim.path.slice(sim.segIdx + 1, sim.segIdx + 4);
+    // Lookahead de ruta respetando la dirección (ping-pong)
+    const ahead: string[] = [];
+    let ai = sim.segIdx;
+    for (let k = 0; k < 3 && ai >= 0 && ai < sim.path.length; k++) {
+      ahead.push(sim.path[ai]);
+      ai += sim.dir;
+    }
+    sim.def.path = ahead;
 
     if (sim.def.estado === "CHARGING") {
       sim.def.bateria = Math.max(10, sim.def.bateria - 0.01);
@@ -598,7 +623,8 @@ export class DemoEngine {
     const toId = p.waypoints[(p.wpIdx + 1) % p.waypoints.length];
     const from = this.node(fromId);
     const to = this.node(toId);
-    p.t += p.speed;
+    const segLen = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    p.t += (p.speed * 0.2) / segLen; // speed en px/s reales; normalizado por longitud del tramo
     if (p.t >= 1) {
       p.t = 0;
       p.wpIdx = (p.wpIdx + 1) % p.waypoints.length;
