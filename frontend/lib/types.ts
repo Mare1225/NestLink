@@ -101,7 +101,13 @@ export interface Mission {
   amr_asignado?: string | null;
 }
 
-export type TipoNodo = "linea" | "empacadora" | "almacen" | "cruce" | "carga";
+export type TipoNodo =
+  | "linea"
+  | "empacadora"
+  | "almacen"
+  | "cruce"
+  | "carga"
+  | "buffer";
 
 export interface LayoutNode {
   id: string;
@@ -128,11 +134,36 @@ export interface LayoutPedestrian {
   radius: number;
 }
 
+/** Zona de fondo del mapa (rect en coords de layout). color "" = solo etiqueta; label "" = solo relleno. */
+export interface LayoutZone {
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: string;
+}
+
+/** Metadatos de línea de producción (opcional; consumido si backend lo envía). */
+export interface LayoutLine {
+  id: string;
+  nombre?: string;
+  color?: string;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  buffer_nodes?: string[];
+}
+
 export interface PlantLayout {
   canvas: { w: number; h: number; title: string };
   nodes: LayoutNode[];
   edges: LayoutEdge[];
   pedestrians: LayoutPedestrian[];
+  /** Capas de fondo opcionales — impermeable si ausente/vacío */
+  zones?: LayoutZone[];
+  lines?: LayoutLine[];
 }
 
 /** Posición interpolada para render a 60fps */

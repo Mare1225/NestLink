@@ -16,6 +16,56 @@ import type {
   SpillMode,
 } from "@/lib/types";
 
+
+/** Hex/rgb → rgba con alpha; si no parseable, null (usar globalAlpha). */
+function colorWithAlpha(color: string, alpha: number): string | null {
+  const c = color.trim();
+  if (!c) return null;
+  if (c.startsWith("#")) {
+    let r = 0, g = 0, b = 0;
+    if (c.length === 4) {
+      r = parseInt(c[1] + c[1], 16);
+      g = parseInt(c[2] + c[2], 16);
+      b = parseInt(c[3] + c[3], 16);
+    } else if (c.length >= 7) {
+      r = parseInt(c.slice(1, 3), 16);
+      g = parseInt(c.slice(3, 5), 16);
+      b = parseInt(c.slice(5, 7), 16);
+    } else {
+      return null;
+    }
+    if ([r, g, b].some((v) => Number.isNaN(v))) return null;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+  const m = c.match(/^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (m) return `rgba(${m[1]},${m[2]},${m[3]},${alpha})`;
+  return null;
+}
+
+/** Flecha de sentido u→v en el punto medio de la arista (capa estática). */
+function drawDirectionArrow(
+  ctx: CanvasRenderingContext2D,
+  sa: { x: number; y: number },
+  sb: { x: number; y: number },
+  scale: number
+) {
+  const mx = (sa.x + sb.x) / 2;
+  const my = (sa.y + sb.y) / 2;
+  const angle = Math.atan2(sb.y - sa.y, sb.x - sa.x);
+  const size = Math.max(4, 5.5 * scale);
+  ctx.save();
+  ctx.translate(mx, my);
+  ctx.rotate(angle);
+  ctx.fillStyle = "rgba(70, 85, 100, 0.55)";
+  ctx.beginPath();
+  ctx.moveTo(size, 0);
+  ctx.lineTo(-size * 0.65, size * 0.55);
+  ctx.lineTo(-size * 0.65, -size * 0.55);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 interface PlantMapProps {
   layout: PlantLayout;
   layoutKey: number;
@@ -151,9 +201,60 @@ export function PlantMap({
       ctx.stroke();
     }
 
+    // Lookup O(1) para mapas grandes (~500 nodos/aristas)
+    const nodeById = new Map(layout.nodes.map((n) => [n.id, n]));
+
+    // Capas de fondo (zonas) — impermeable si ausente/vacío
+    const zones = layout.zones;
+    if (zones && zones.length > 0) {
+      for (const zone of zones) {
+        try {
+          const tl = toScreen(zone.x, zone.y);
+          const br = toScreen(zone.x + zone.w, zone.y + zone.h);
+          const zx = Math.min(tl.x, br.x);
+          const zy = Math.min(tl.y, br.y);
+          const zw = Math.abs(br.x - tl.x);
+          const zh = Math.abs(br.y - tl.y);
+          const hasFill = Boolean(zone.color && zone.color.trim());
+          const hasLabel = Boolean(zone.label && zone.label.trim());
+
+          if (hasFill) {
+            const fill = colorWithAlpha(zone.color, 0.18);
+            if (fill) {
+              ctx.fillStyle = fill;
+              ctx.fillRect(zx, zy, zw, zh);
+            } else {
+              ctx.save();
+              ctx.globalAlpha = 0.18;
+              ctx.fillStyle = zone.color;
+              ctx.fillRect(zx, zy, zw, zh);
+              ctx.restore();
+            }
+            const stroke = colorWithAlpha(zone.color, 0.55) ?? zone.color;
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(zx, zy, zw, zh);
+          }
+
+          if (hasLabel) {
+            const fontPx = Math.max(10, Math.min(zw / 18, 48));
+            ctx.save();
+            ctx.fillStyle = colorWithAlpha(zone.color || "#1a3a4a", 0.35) ?? "rgba(26,58,74,0.35)";
+            ctx.font = `bold ${fontPx}px sans-serif`;
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            ctx.fillText(zone.label, zx + 6 * scale, zy + 4 * scale);
+            ctx.restore();
+          }
+        } catch {
+          // Zona malformada — no tumbar el rAF
+        }
+      }
+    }
+
     layout.edges.forEach((e: LayoutEdge) => {
-      const na = layout.nodes.find((n) => n.id === e.from);
-      const nb = layout.nodes.find((n) => n.id === e.to);
+      const na = nodeById.get(e.from);
+      const nb = nodeById.get(e.to);
       if (!na || !nb) return;
       const sa = toScreen(na.x, na.y);
       const sb = toScreen(nb.x, nb.y);
@@ -186,6 +287,12 @@ export function PlantMap({
       ctx.stroke();
       ctx.setLineDash([]);
 
+      // Flecha de sentido en aristas unidireccionales (entre zonas y nodos)
+      const dir = (e.direction || "bi").toLowerCase();
+      if (dir !== "bi") {
+        drawDirectionArrow(ctx, sa, sb, scale);
+      }
+
       if (blocked) {
         const mx = (sa.x + sb.x) / 2;
         const my = (sa.y + sb.y) / 2;
@@ -205,50 +312,72 @@ export function PlantMap({
     });
 
     layout.nodes.forEach((n) => {
-      const s = toScreen(n.x, n.y);
-      if (n.type === "linea") {
-        ctx.fillStyle = "#2d6a4f";
-        ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
-      } else if (n.type === "empacadora") {
-        ctx.fillStyle = "#e85d04";
-        ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
-      } else if (n.type === "almacen") {
-        ctx.fillStyle = "#457b9d";
-        ctx.fillRect(s.x - 22 * scale, s.y - 16 * scale, 44 * scale, 32 * scale);
-        ctx.strokeStyle = "#a8dadc";
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
+      try {
+        const s = toScreen(n.x, n.y);
+        if (n.type === "linea") {
+          ctx.fillStyle = "#2d6a4f";
+          ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
+        } else if (n.type === "empacadora") {
+          ctx.fillStyle = "#e85d04";
+          ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
+        } else if (n.type === "almacen") {
+          ctx.fillStyle = "#457b9d";
+          ctx.fillRect(s.x - 22 * scale, s.y - 16 * scale, 44 * scale, 32 * scale);
+          ctx.strokeStyle = "#a8dadc";
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(s.x - 18 * scale, s.y - 12 * scale + i * 10 * scale);
+            ctx.lineTo(s.x + 18 * scale, s.y - 12 * scale + i * 10 * scale);
+            ctx.stroke();
+          }
+        } else if (n.type === "carga") {
+          ctx.fillStyle = "#d29922";
           ctx.beginPath();
-          ctx.moveTo(s.x - 18 * scale, s.y - 12 * scale + i * 10 * scale);
-          ctx.lineTo(s.x + 18 * scale, s.y - 12 * scale + i * 10 * scale);
-          ctx.stroke();
+          ctx.arc(s.x, s.y, 12 * scale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#fff";
+          ctx.font = `${10 * scale}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText("⚡", s.x, s.y + 4 * scale);
+        } else if (n.type === "buffer") {
+          const half = 3.5 * scale;
+          ctx.fillStyle = "#e8eef2";
+          ctx.fillRect(s.x - half, s.y - half, half * 2, half * 2);
+          ctx.strokeStyle = "#4a5560";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(s.x - half, s.y - half, half * 2, half * 2);
+          if (n.label) {
+            ctx.fillStyle = "#6a7a8a";
+            ctx.font = `${6 * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillText(n.label, s.x, s.y - half - 3 * scale);
+          }
+        } else {
+          ctx.fillStyle = "#6c8ebf";
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 6 * scale, 0, Math.PI * 2);
+          ctx.fill();
         }
-      } else if (n.type === "carga") {
-        ctx.fillStyle = "#d29922";
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 12 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.font = `${10 * scale}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText("⚡", s.x, s.y + 4 * scale);
-      } else {
-        ctx.fillStyle = "#6c8ebf";
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 6 * scale, 0, Math.PI * 2);
-        ctx.fill();
-      }
 
-      if (n.label && n.type !== "cruce") {
-        ctx.fillStyle = "#1a3a4a";
-        ctx.font = `bold ${9 * scale}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(n.label, s.x, s.y - 18 * scale);
-      } else if (n.type === "cruce") {
-        ctx.fillStyle = "#4a6a7a";
-        ctx.font = `${7 * scale}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(n.id, s.x, s.y + 14 * scale);
+        if (n.type === "buffer") {
+          // label ya dibujado arriba
+        } else if (n.label && n.type !== "cruce") {
+          ctx.fillStyle = "#1a3a4a";
+          ctx.font = `bold ${9 * scale}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "alphabetic";
+          ctx.fillText(n.label, s.x, s.y - 18 * scale);
+        } else if (n.type === "cruce") {
+          ctx.fillStyle = "#4a6a7a";
+          ctx.font = `${7 * scale}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "alphabetic";
+          ctx.fillText(n.id, s.x, s.y + 14 * scale);
+        }
+      } catch {
+        // Nodo problemático — no tumbar el rAF
       }
     });
 
