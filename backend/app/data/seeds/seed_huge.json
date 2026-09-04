@@ -1,0 +1,127 @@
+{
+  "lines": [
+    {
+      "id": "L1_OUT",
+      "nombre": "Línea Papas Fritas",
+      "material": "Papa deshidratada",
+      "tasa_consumo_kg_min": 4.5,
+      "umbral_critico_pct": 25,
+      "nivel_inicial_pct": 70,
+      "capacidad_pallet_unidades": 480
+    },
+    {
+      "id": "L2_OUT",
+      "nombre": "Línea Galletas",
+      "material": "Harina de trigo",
+      "tasa_consumo_kg_min": 3.8,
+      "umbral_critico_pct": 25,
+      "nivel_inicial_pct": 65,
+      "capacidad_pallet_unidades": 480
+    },
+    {
+      "id": "L3_OUT",
+      "nombre": "Línea Snacks Extruidos",
+      "material": "Maíz extruido",
+      "tasa_consumo_kg_min": 5.0,
+      "umbral_critico_pct": 25,
+      "nivel_inicial_pct": 60,
+      "capacidad_pallet_unidades": 600
+    }
+  ],
+  "skus": [
+    {
+      "id": "SKU_PAP_01",
+      "nombre": "Papas Fritas 150g",
+      "categoria": "Producto Terminado",
+      "material_empaque": "Bolsa metalizada",
+      "packaging": "Caja x24",
+      "peso_unitario_kg": 3.6
+    },
+    {
+      "id": "SKU_GAL_01",
+      "nombre": "Galletas 200g",
+      "categoria": "Producto Terminado",
+      "material_empaque": "Film flowpack",
+      "packaging": "Caja x20",
+      "peso_unitario_kg": 4.0
+    },
+    {
+      "id": "SKU_SNK_01",
+      "nombre": "Snack Extruido 100g",
+      "categoria": "Producto Terminado",
+      "material_empaque": "Bolsa HDPE",
+      "packaging": "Caja x30",
+      "peso_unitario_kg": 3.0
+    },
+    {
+      "id": "SKU_EMP_01",
+      "nombre": "Film empaque",
+      "categoria": "Insumo",
+      "material_empaque": "Film",
+      "packaging": "Bobina",
+      "peso_unitario_kg": 18.0
+    }
+  ],
+  "amrs": [
+    {
+      "id": "AMR_01",
+      "nombre": "Huge Shuttle 1",
+      "tipo": "pallet_lifter",
+      "velocidad_ms": 1.5,
+      "carga_kg": 500,
+      "bateria_inicial": 95,
+      "posicion_nodo": "CHARGER_HUGE_1",
+      "home_zone": "corr_0.00"
+    },
+    {
+      "id": "AMR_02",
+      "nombre": "Huge Shuttle 2",
+      "tipo": "pallet_lifter",
+      "velocidad_ms": 1.5,
+      "carga_kg": 500,
+      "bateria_inicial": 88,
+      "posicion_nodo": "CHARGER_HUGE_2",
+      "home_zone": "east_0.00"
+    },
+    {
+      "id": "AMR_03",
+      "nombre": "Huge Tugger 1",
+      "tipo": "towing_tug",
+      "velocidad_ms": 0.9,
+      "carga_kg": 400,
+      "bateria_inicial": 80,
+      "posicion_nodo": "CHARGER_HUGE_3",
+      "home_zone": "corr_47.10"
+    },
+    {
+      "id": "AMR_04",
+      "nombre": "Huge Unit 1",
+      "tipo": "unit_load",
+      "velocidad_ms": 1.5,
+      "carga_kg": 300,
+      "bateria_inicial": 90,
+      "posicion_nodo": "corr_12.00",
+      "home_zone": "corr_12.00"
+    },
+    {
+      "id": "AMR_05",
+      "nombre": "Huge Shuttle 3",
+      "tipo": "pallet_lifter",
+      "velocidad_ms": 1.5,
+      "carga_kg": 500,
+      "bateria_inicial": 75,
+      "posicion_nodo": "fin_linea1",
+      "home_zone": "corr_12.00"
+    },
+    {
+      "id": "AMR_06",
+      "nombre": "Huge Unit 2",
+      "tipo": "unit_load",
+      "velocidad_ms": 1.5,
+      "carga_kg": 300,
+      "bateria_inicial": 85,
+      "posicion_nodo": "buf_linea2_0",
+      "home_zone": "corr_28.00"
+    }
+  ]
+}
