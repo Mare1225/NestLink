@@ -129,8 +129,9 @@ class SimulationEnvironment:
             # 2. Reubicación preventiva para AMRs ociosos (umbral reducido a 2.0s para flujo continuo)
             for amr in self.amrs:
                 if amr.estado == "IDLE" and amr.idle_timer > 2.0:
-                    target_hub = amr.home_zone or ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
-                    if amr.posicion_nodo != target_hub:
+                    is_on_operational_node = self.node_types.get(amr.posicion_nodo) in ["linea", "empacadora", "almacen"]
+                    target_hub = amr.home_zone if (amr.home_zone and self.node_types.get(amr.home_zone) not in ["linea", "empacadora", "almacen"]) else ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
+                    if amr.posicion_nodo != target_hub or is_on_operational_node:
                         self.mission_queue.add_mission("RELOCATION", amr.posicion_nodo, target_hub, prioridad=2, sim_time=self.sim_time)
                         amr.idle_timer = 0.0
 
@@ -267,8 +268,9 @@ class SimulationEnvironment:
 
         for amr in self.amrs:
             if amr.estado == "IDLE" and amr.idle_timer > 2.0:
-                target_hub = amr.home_zone or ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
-                if amr.posicion_nodo != target_hub:
+                is_on_operational_node = self.node_types.get(amr.posicion_nodo) in ["linea", "empacadora", "almacen"]
+                target_hub = amr.home_zone if (amr.home_zone and self.node_types.get(amr.home_zone) not in ["linea", "empacadora", "almacen"]) else ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
+                if amr.posicion_nodo != target_hub or is_on_operational_node:
                     self.mission_queue.add_mission("RELOCATION", amr.posicion_nodo, target_hub, prioridad=2, sim_time=self.sim_time)
                     amr.idle_timer = 0.0
 

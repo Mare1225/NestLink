@@ -224,8 +224,14 @@ class AMRAgent:
 
         # Comprobar si el próximo paso es la estación de entrega y está ocupada por otro AMR
         if env and next_node == self.path[-1] and (self.estado in ["MOVING_TO_DELIVERY", "MOVING_TO_PICKUP"]):
-            other_at_dest = any(a.id != self.id and a.posicion_nodo == next_node for a in getattr(env, 'amrs', []))
-            if other_at_dest:
+            other_amr = next((a for a in getattr(env, 'amrs', []) if a.id != self.id and a.posicion_nodo == next_node), None)
+            if other_amr:
+                if other_amr.estado == "IDLE":
+                    # Si el AMR ocupante está IDLE, forzar su reubicación inmediata
+                    target_hub = other_amr.home_zone if (other_amr.home_zone and env.node_types.get(other_amr.home_zone) not in ["linea", "empacadora", "almacen"]) else ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
+                    if other_amr.posicion_nodo != target_hub:
+                        env.mission_queue.add_mission("RELOCATION", other_amr.posicion_nodo, target_hub, prioridad=4, sim_time=env.sim_time)
+                        other_amr.idle_timer = 0.0
                 from app.sim.routing import get_free_buffer_for_line
                 line_id = None
                 if self.tarea_actual:
