@@ -10,6 +10,8 @@ interface HeaderProps {
   selectedPlantId: string;
   onPlantChange: (plantId: string) => void;
   plantLoading?: boolean;
+  fullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 function formatSimTime(seconds: number): string {
@@ -26,6 +28,8 @@ export function Header({
   selectedPlantId,
   onPlantChange,
   plantLoading,
+  fullscreen,
+  onToggleFullscreen,
 }: HeaderProps) {
   const selectedName =
     plants.find((p) => p.id === selectedPlantId)?.nombre ?? selectedPlantId;
@@ -108,6 +112,24 @@ export function Header({
               <div className="nest-kpi-value text-lg text-nest-text">{amrCount}</div>
             </div>
           </div>
+
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              className={`nest-btn ${
+                fullscreen ? "nest-btn-primary" : "nest-btn-ghost"
+              }`}
+              title={
+                fullscreen
+                  ? "Salir de mapa completo (Esc)"
+                  : "Abrir mapa en página única"
+              }
+              aria-pressed={fullscreen}
+            >
+              {fullscreen ? "⊡ Salir mapa" : "⛶ Mapa"}
+            </button>
+          )}
         </div>
       </div>
     </header>

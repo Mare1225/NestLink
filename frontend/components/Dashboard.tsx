@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ControlPanel } from "@/components/ControlPanel";
 import { FleetBatteryPanel } from "@/components/FleetBatteryPanel";
 import { FleetDetailView } from "@/components/FleetDetailView";
 import { FloatingDetailModal } from "@/components/FloatingDetailModal";
+import { FloatingLinesBar } from "@/components/FloatingLinesBar";
 import { Header } from "@/components/Header";
 import { KanbanDetailView } from "@/components/KanbanDetailView";
 import { KanbanPanel } from "@/components/KanbanPanel";
-import { KpiBar } from "@/components/KpiBar";
+import { KpiMiniPanel } from "@/components/KpiMiniPanel";
 import { LineGaugesPanel } from "@/components/LineGaugesPanel";
 import { NoticeBanner } from "@/components/NoticeBanner";
 import { PlantMap } from "@/components/PlantMap";
@@ -61,13 +62,23 @@ export function Dashboard() {
     null
   );
   const [fleetCollapsed, setFleetCollapsed] = useState(false);
-  const [linesCollapsed, setLinesCollapsed] = useState(false);
+  const [linesCollapsed, setLinesCollapsed] = useState(true);
   const [kanbanCollapsed, setKanbanCollapsed] = useState(false);
   const [fleetModalOpen, setFleetModalOpen] = useState(false);
   const [kanbanModalOpen, setKanbanModalOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   const sidebarNarrow =
-    fleetCollapsed && linesCollapsed && kanbanCollapsed ? "72px" : "280px";
+    fleetCollapsed && linesCollapsed && kanbanCollapsed ? "72px" : "240px";
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
 
   const handleSpillModeChange = (mode: SpillMode) => {
     setSpillMode(mode);
@@ -246,6 +257,51 @@ export function Dashboard() {
   const notices = snapshot?.notices ?? [];
   const fleetAmrs = snapshot?.amrs ?? [];
 
+  const mapEl = (
+    <PlantMap
+      layout={layout}
+      layoutKey={layoutKey}
+      amrs={renderAmrs}
+      missions={missions}
+      obstacles={obstacles}
+      spillMode={spillMode}
+      selectedEdge={selectedEdge}
+      onEdgeSelect={setSelectedEdge}
+    />
+  );
+
+  if (fullscreen) {
+    return (
+      <div className="nest-shell relative flex h-screen w-screen flex-col text-nest-text overflow-hidden">
+        <Header
+          simTime={snapshot?.sim_time}
+          amrCount={renderAmrs.length}
+          mode={mode}
+          plants={plants}
+          selectedPlantId={selectedPlantId}
+          onPlantChange={handlePlantChange}
+          plantLoading={plantLoading}
+          fullscreen
+          onToggleFullscreen={() => setFullscreen(false)}
+        />
+        <div className="relative flex-1 min-h-0 min-w-0">
+          <div className="absolute inset-0 overflow-hidden">{mapEl}</div>
+          <FloatingLinesBar
+            lines={lines}
+            onClose={() => setFullscreen(false)}
+            onPeak={(id, label) => {
+              void handlePeak(id, label);
+            }}
+            onRefill={(id) => {
+              void handleRefill(id);
+            }}
+            loading={actionLoading}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="nest-shell flex h-screen flex-col text-nest-text">
       <Header
@@ -256,16 +312,18 @@ export function Dashboard() {
         selectedPlantId={selectedPlantId}
         onPlantChange={handlePlantChange}
         plantLoading={plantLoading}
+        fullscreen={false}
+        onToggleFullscreen={() => setFullscreen(true)}
       />
       <NoticeBanner notices={notices} />
       <div
-        className="dashboard-grid grid flex-1 gap-3 p-4 min-h-0 transition-[grid-template-columns] duration-300"
+        className="dashboard-grid grid flex-1 gap-2 p-3 min-h-0 transition-[grid-template-columns] duration-300"
         style={{
           gridTemplateColumns: `1fr ${sidebarNarrow}`,
-          gridTemplateRows: "minmax(0, 1fr) auto",
+          gridTemplateRows: "minmax(0, 1fr)",
         }}
       >
-        <div className="flex flex-col gap-2 min-h-0 min-w-0">
+        <div className="relative flex flex-col gap-1.5 min-h-0 min-w-0">
           <ControlPanel
             spillMode={spillMode}
             onSpillModeChange={handleSpillModeChange}
@@ -281,21 +339,21 @@ export function Dashboard() {
             offline={mode === "offline"}
             loading={actionLoading}
           />
-          <div className="nest-panel flex-1 min-h-[280px] overflow-hidden shadow-nest-glow">
-            <PlantMap
-              layout={layout}
-              layoutKey={layoutKey}
-              amrs={renderAmrs}
-              missions={missions}
-              obstacles={obstacles}
-              spillMode={spillMode}
-              selectedEdge={selectedEdge}
-              onEdgeSelect={setSelectedEdge}
-            />
+          <div className="nest-panel relative flex-1 min-h-0 min-w-0 overflow-hidden shadow-nest-glow">
+            {mapEl}
+            <button
+              type="button"
+              onClick={() => setFullscreen(true)}
+              className="absolute top-2 right-2 z-10 nest-btn-ghost nest-btn px-2 py-1 text-[0.65rem] bg-[#0d1219]/80 backdrop-blur-sm"
+              title="Abrir mapa en página única"
+            >
+              ⛶ Ampliar
+            </button>
           </div>
         </div>
 
-        <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
+        <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden">
+          <KpiMiniPanel kpis={kpis} />
           <FleetBatteryPanel
             amrs={fleetAmrs}
             onLowBattery={handleLowBattery}
@@ -320,10 +378,6 @@ export function Dashboard() {
               <TrendsPanel />
             </div>
           )}
-        </div>
-
-        <div className="col-span-2 min-w-0">
-          <KpiBar kpis={kpis} />
         </div>
       </div>
 

@@ -6,6 +6,10 @@ interface CollapsibleSidePanelProps {
   onToggle: () => void;
   onExpand: () => void;
   children: React.ReactNode;
+  /** Extra content in the header (e.g. status dots when collapsed) */
+  headerExtra?: React.ReactNode;
+  /** Hide the Expandir button (use when onExpand === onToggle) */
+  hideExpand?: boolean;
 }
 
 export function CollapsibleSidePanel({
@@ -14,6 +18,8 @@ export function CollapsibleSidePanel({
   onToggle,
   onExpand,
   children,
+  headerExtra,
+  hideExpand,
 }: CollapsibleSidePanelProps) {
   return (
     <aside
@@ -34,15 +40,18 @@ export function CollapsibleSidePanel({
             ▾
           </span>
           <span className="truncate">{title}</span>
+          {headerExtra}
         </button>
-        <button
-          type="button"
-          onClick={onExpand}
-          className="nest-btn-ghost nest-btn px-2 py-1 text-[0.65rem]"
-          title="Expandir vista detallada"
-        >
-          Expandir
-        </button>
+        {!hideExpand && (
+          <button
+            type="button"
+            onClick={onExpand}
+            className="nest-btn-ghost nest-btn px-2 py-1 text-[0.65rem]"
+            title="Expandir vista detallada"
+          >
+            Expandir
+          </button>
+        )}
       </div>
       {!collapsed && (
         <div className="flex-1 min-h-0 overflow-y-auto p-3">{children}</div>

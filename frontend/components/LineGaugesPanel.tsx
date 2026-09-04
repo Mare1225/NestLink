@@ -20,12 +20,37 @@ export function LineGaugesPanel({
   collapsed,
   onToggle,
 }: LineGaugesPanelProps) {
+  const headerExtra = (
+    <span className="flex items-center gap-1.5 min-w-0 normal-case tracking-normal font-medium">
+      <span className="text-nest-muted/80 tabular-nums">· {lines.length}</span>
+      {lines.length > 0 && (
+        <span className="flex items-center gap-0.5" aria-hidden>
+          {lines.slice(0, 8).map((line) => (
+            <span
+              key={line.id}
+              className="h-1.5 w-1.5 rounded-full shrink-0"
+              style={{ background: levelColor(line.nivel_pct) }}
+              title={`${line.nombre}: ${line.nivel_pct.toFixed(0)}%`}
+            />
+          ))}
+          {lines.length > 8 && (
+            <span className="text-[0.55rem] text-nest-muted ml-0.5">
+              +{lines.length - 8}
+            </span>
+          )}
+        </span>
+      )}
+    </span>
+  );
+
   return (
     <CollapsibleSidePanel
       title="Insumos por línea"
       collapsed={collapsed}
       onToggle={onToggle}
       onExpand={onToggle}
+      headerExtra={headerExtra}
+      hideExpand
     >
       {lines.length === 0 && (
         <p className="text-xs text-nest-muted">Sin datos de líneas</p>

@@ -54,113 +54,121 @@ export function ControlPanel({
   };
 
   const selectedLine = packingLines.find((l) => l.id === peakLineId);
+  const needsConfirm = spillMode !== "none";
 
   return (
-    <div className="nest-panel shrink-0 p-3 space-y-3">
-      <div className="nest-label">Operaciones de simulación</div>
+    <div className="nest-panel shrink-0 px-2 py-1.5 space-y-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="nest-label shrink-0 px-1 hidden sm:inline">Ops</span>
 
-      <div className="flex flex-col gap-2">
-        <div className="nest-toolbar-solid">
-          <span className="nest-label shrink-0 px-1">Obstáculos</span>
-          <button
-            type="button"
-            onClick={() => toggleMode("block")}
-            className={`nest-btn ${
-              spillMode === "block" ? "nest-btn-warm" : "nest-btn-ghost"
-            }`}
-          >
-            Derrame
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleMode("unblock")}
-            className={`nest-btn ${
-              spillMode === "unblock" ? "nest-btn-primary" : "nest-btn-ghost"
-            }`}
-          >
-            Despeje
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => toggleMode("block")}
+          title="Modo derrame"
+          className={`nest-btn ${
+            spillMode === "block" ? "nest-btn-warm" : "nest-btn-ghost"
+          }`}
+        >
+          🚧 Derrame
+        </button>
+        <button
+          type="button"
+          onClick={() => toggleMode("unblock")}
+          title="Modo despeje"
+          className={`nest-btn ${
+            spillMode === "unblock" ? "nest-btn-primary" : "nest-btn-ghost"
+          }`}
+        >
+          ✅ Despeje
+        </button>
+
+        <span className="hidden sm:inline h-5 w-px bg-white/[0.1] mx-0.5" aria-hidden />
 
         {packingLines.length > 0 && (
-          <div className="nest-toolbar-solid flex-col items-stretch gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="nest-label shrink-0">Línea</span>
-              <select
-                value={peakLineId}
-                onChange={(e) => setPeakLineId(e.target.value)}
-                className="nest-select min-w-[140px] text-xs py-1"
-                aria-label="Línea de producción"
-              >
-                {packingLines.map((l) => (
-                  <option key={l.id} value={l.id} className="bg-[#111820]">
-                    {l.nombre}
-                  </option>
-                ))}
-              </select>
-              {offline && (
-                <span className="nest-status-offline ml-auto">Sin backend</span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                disabled={loading || !peakLineId}
-                onClick={() =>
-                  onPeak(peakLineId, selectedLine?.nombre ?? peakLineId)
-                }
-                className="nest-btn-warm"
-              >
-                Pico demanda
-              </button>
-              <button
-                type="button"
-                disabled={loading || !peakLineId}
-                onClick={() => onRefill(peakLineId)}
-                className="nest-btn-success"
-              >
-                Rellenar 80%
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => onRefillAll()}
-                className="nest-btn-ghost"
-              >
-                Todas 80%
-              </button>
-              <span className="hidden sm:inline h-5 w-px bg-white/[0.1] mx-0.5" aria-hidden />
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => onResetMissions()}
-                className="nest-btn-ghost"
-              >
-                Reiniciar tareas
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => onAdjustMissions(5)}
-                className="nest-btn-success"
-              >
-                +5 misiones
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => onAdjustMissions(-5)}
-                className="nest-btn-warning"
-              >
-                −5 misiones
-              </button>
-            </div>
-          </div>
+          <>
+            <select
+              value={peakLineId}
+              onChange={(e) => setPeakLineId(e.target.value)}
+              className="nest-select min-w-[110px] max-w-[160px] text-xs py-1"
+              aria-label="Línea de producción"
+            >
+              {packingLines.map((l) => (
+                <option key={l.id} value={l.id} className="bg-[#111820]">
+                  {l.nombre}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={loading || !peakLineId}
+              onClick={() =>
+                onPeak(peakLineId, selectedLine?.nombre ?? peakLineId)
+              }
+              className="nest-btn-warm"
+              title="Inyectar pico de demanda"
+            >
+              Pico
+            </button>
+            <button
+              type="button"
+              disabled={loading || !peakLineId}
+              onClick={() => onRefill(peakLineId)}
+              className="nest-btn-success"
+              title="Rellenar línea al 80%"
+            >
+              80%
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => onRefillAll()}
+              className="nest-btn-ghost"
+              title="Rellenar todas al 80%"
+            >
+              Todas
+            </button>
+          </>
+        )}
+
+        <span className="hidden md:inline h-5 w-px bg-white/[0.1] mx-0.5" aria-hidden />
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => onResetMissions()}
+          className="nest-btn-ghost"
+          title="Reiniciar tareas"
+        >
+          Reset
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => onAdjustMissions(5)}
+          className="nest-btn-success"
+          title="+5 misiones"
+        >
+          +5
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => onAdjustMissions(-5)}
+          className="nest-btn-warning"
+          title="−5 misiones"
+        >
+          −5
+        </button>
+
+        {offline && (
+          <span className="nest-status-offline ml-auto text-[0.65rem]">
+            Sin backend
+          </span>
         )}
       </div>
 
-      {spillMode === "block" && (
-        <div className="nest-hint nest-hint-warm text-xs">
+      {needsConfirm && spillMode === "block" && (
+        <div className="nest-hint nest-hint-warm text-xs py-1.5">
           <span>Selecciona un pasillo en el mapa</span>
           {selectedEdge && (
             <>
@@ -180,8 +188,8 @@ export function ControlPanel({
         </div>
       )}
 
-      {spillMode === "unblock" && (
-        <div className="nest-hint nest-hint-info text-xs">
+      {needsConfirm && spillMode === "unblock" && (
+        <div className="nest-hint nest-hint-info text-xs py-1.5">
           <span>Clic en pasillo bloqueado (rojo)</span>
           {selectedEdge && (
             <>
