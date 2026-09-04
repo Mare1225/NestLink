@@ -11,41 +11,47 @@
 
 | # | Eje obligatorio | Dónde se cubre | Timing |
 |---|---|---|---|
-| 1 | **Problemática** | Sec. Problema | 0:00–0:40 |
-| 2 | **Viabilidad técnica** | Sec. Solución/Viabilidad + Demo en vivo | 0:40–2:30 |
+| 1 | **Problemática** | Sec. Problema (fiel al reto Nestlé) | 0:00–0:45 |
+| 2 | **Viabilidad técnica** | Sec. Solución/Viabilidad + Demo en vivo | 0:45–1:30 |
 | 3 | **Innovación (qué nos diferencia)** | Sec. Innovación + Apéndice B | 2:30–3:05 |
-| 4 | **Propuesta de valor para Nestlé** | Sec. Valor + Métricas + Apéndice A | 3:05–3:40 |
-| 5 | **Sostenibilidad / uso eficiente de recursos** | Sec. Sostenibilidad | 3:40–4:10 |
-| 6 | **Escalabilidad y replicabilidad** | Sec. Escalar | 4:10–4:40 |
-| — | Cierre | Sec. Cierre | 4:40–5:00 |
+| 4 | **Propuesta de valor para Nestlé** | Sec. Valor + Métricas + Apéndice A | 3:05–3:35 |
+| 5 | **Sostenibilidad / uso eficiente de recursos** | Sec. Sostenibilidad | 3:35–4:05 |
+| 6 | **Escalabilidad y replicabilidad** | Sec. Escalar | 4:05–4:35 |
+| — | Cierre | Sec. Cierre | 4:35–5:00 |
 
 ---
 
-## 0:00 – 0:40 · 1) PROBLEMÁTICA (narrativa)
+## 0:00 – 0:45 · 1) PROBLEMÁTICA (fiel al reto Nestlé)
 
-> *(Móntate cerca del mapa, señala la pantalla.)*
+> *(Móntate cerca del mapa; abre con la pregunta central del reto, en pantalla.)*
 
-"En una planta Nestlé, mover materia prima, semielaborados y producto terminado es el corazón de la operación. Hoy se hace con AMRs de distintos fabricantes que **no hablan entre sí**, y con rutas planificadas como si el piso estuviera vacío. ¿Qué pasa de verdad?
+"El reto de Nestlé es claro: **¿cómo automatizar y optimizar el flujo de materiales y productos entre producción y almacenamiento** usando tecnologías autónomas que mejoren **productividad, eficiencia y seguridad**?
 
-- Se **bloquean en pasillos** y chocan virtualmente con muros y personas.
-- Los **puntos de entrega (OUTs)** se saturan: dos robots pueden dejar un paquete al mismo segundo y, sin un control de estados, **alguien se olvida de él y ocupa el OUT para siempre**.
-- Cuando un robot va a **cargar batería, se lleva la entrega en curso** — la operación pierde el paquete y arranca de cero.
-- Y nadie ve **en tiempo real** dónde está cada pallet ni cuánto tarda cada entrega.
+Ese flujo va en **dos sentidos** y ambos deben operar sin fricción:
+1. **Producto terminado**: desde **líneas de producción semiautomáticas** hacia **almacenamiento** (traslado automático).
+2. **Materiales**: el **suministro oportuno** desde **almacén** hacia las **máquinas empaquetadoras**.
 
-Los costos ocultos no son las máquinas: son **las esperas, los viajes en vacío (~45 % de los km), los paquetes olvidados y el tiempo de gente** que debería estar en valor, no desbloqueando robots."
+Hoy, en el movimiento interno de materiales, encontramos:
+- **Intervenciones manuales y tiempos improductivos** que frenan la operación.
+- **Riesgos operativos** asociados al movimiento interno (choques, cuellos de botella, errores).
+- **Recorridos, recursos y tiempos de abastecimiento no optimizados** → las empaquetadoras esperan insumos y el producto terminado no sale a tiempo.
+- **Costos ocultos**: viajes en vacío (~45 % de los km), paquetes olvidados que ocupan el punto de entrega, y gente dedicada a desbloquear, no a crear valor.
+
+Y el reto pide una respuesta con **relación costo-beneficio convincente**, **viable en un entorno industrial real** y con **potencial de escalabilidad**."
 
 ---
 
-## 0:40 – 1:30 · 2) SOLUCIÓN + VIABILIDAD TÉCNICA
+## 0:45 – 1:30 · 2) SOLUCIÓN + VIABILIDAD TÉCNICA
 
 > *(Apunta al mapa.)*
 
-"NestLink es una **capa de coordinación y visibilidad** que unifica una flota heterogénea sobre **un mapa que sí respeta la realidad**. ¿Por qué es viable técnicamente hoy?
+"NestLink — capa de **coordinación y visibilidad** para automatización intralogística — responde a ese doble flujo: **producto terminado → almacén** y **materiales → empaquetadoras**, sobre un **mapa que sí respeta la realidad**. ¿Qué tecnologías usa y por qué es viable?
 
 - **Mapa vivo desde el layout real**: estaciones, pasillos, **muros físicos** que ningún robot cruza, y **peatones** que la flota esquiva sin detener producción → la capa de decisión corre sobre topología real, no sobre un dibujo.
-- **Flota unificada sobre protocolo abierto**: la lógica de misión se expone por **API/WebSocket**; cualquier AMR que publique posición y acepte misión se integra → **agnóstico de fabricante**.
-- **Cerebro de asignación** con optimización (matching Húngaro), recarga inteligente y prioridades → la coordinación es software, no firmware.
-- **Entrega exclusiva separada de producción**: 5 AMRs de producción (AMR 1–5) + **AMR 6 exclusivo** por la **ruta rosada** hasta el **muro externo**; **4 OUTs en cuadrícula 2×2** con **mission control de estados/asignaciones**.
+- **Flota unificada sobre protocolo abierto**: la lógica de misión se expone por **API/WebSocket**; cualquier AMR/vehículo autónomo que publique posición y acepte misión se integra → **agnóstico de fabricante**.
+- **IA de coordinación**: asignación óptima (matching), recarga inteligente y prioridades → la coordinación es software, no firmware.
+- **Entrega exclusiva separada de producción**: 5 AMRs de producción (AMR 1–5) + **AMR 6 exclusivo** por **ruta rosada** hasta el **muro externo** (zona de almacenamiento/despacho); **4 OUTs en cuadrícula 2×2** con **mission control de estados/asignaciones** (producto terminado listo para almacén, sin bloqueos).
+- **Analítica de datos en tiempo real** y KPIs: la operación se mide y se decide con datos, no a ciegas.
 
 *Clave técnica con los jueces:* "El MVP es un **simulador de decisión**: validamos reglas, KPIs y ahorros **antes de tocar un robot real**. Lo respaldan **89 tests automatizados** y corridas headless por semilla que verifican **cero paquetes atascados** (incl. recargas forzadas)."
 
@@ -81,24 +87,25 @@ Los costos ocultos no son las máquinas: son **las esperas, los viajes en vacío
 
 ---
 
-## 3:05 – 3:40 · 4) PROPUESTA DE VALOR PARA NESTLÉ Y SUS OPERACIONES
+## 3:05 – 3:35 · 4) PROPUESTA DE VALOR PARA NESTLÉ Y SUS OPERACIONES
 
 > *(Apunta al panel de KPIs.)*
 
-"¿Qué obtiene Nestlé de aplicar esto? Beneficios operacionales medibles, y **cada uno con su fuente de dato** (*Apéndice A*):
+"¿Qué obtiene Nestlé de aplicar esto? Beneficios operacionales medibles, y **cada uno con su fuente de dato** (*Apéndice A*). El reto pidió impacto en productividad, seguridad, recursos y costos — lo medimos todos:
 
-- **Más throughput de la flota:** viajes completados y **tiempo medio de entrega** (min) por misión → menor tiempo por pallet.
-- **Menos kilo métrico improductivo:** **km evitados y ROI %** (km evitados / km totales) porque la asignación elimina la **pata vacía** (~45 % del recorrido manual).
-- **Menos paradas de línea:** abastecimiento **preventivo** en el umbral crítico → **paradas evitadas**.
-- **Cero OUTs bloqueados:** mission control por OUT → el punto está siempre disponible.
-- **Nuevo KPI de servicio (ronda 2.8):** **tiempo medio en OUT** (≈1.5 min en corridas de referencia) → promesa de tiempo de salida de producto terminado hacia el muro.
-- **Reutilización:** proyecto sobre **protocolo abierto** → protege la inversión actual en AMRs.
+- **Más productividad de la flota:** viajes completados y **tiempo medio de entrega** (min) por misión → menor tiempo por pallet.
+- **Menos riesgo operativo / más seguridad:** percepción continua (LiDAR) + muros físicos + peatones esquivados → **disminuyen los riesgos del movimiento interno de materiales** (menos choques, menos cuellos de botella, menos intervención humana cerca de máquinas).
+- **Menos kilómetros improductivos:** **km evitados y ROI %** (km evitados / km totales) porque la asignación elimina la **pata vacía** (~45 % del recorrido manual) → menos costo y menos energía.
+- **Menos paradas de línea:** abastecimiento **preventivo** en el umbral crítico de los empaquetadores → **paradas evitadas**, el suministro oportuno que el reto exige.
+- **Cero OUTs bloqueados:** mission control por OUT → el punto de salida de producto terminado está siempre disponible.
+- **Nuevo KPI de servicio (ronda 2.8):** **tiempo medio en OUT** (≈1.5 min en corridas de referencia) → promesa de tiempo de salida de producto terminado hacia el almacén.
+- **Costo-beneficio convincente:** proyecto sobre **protocolo abierto** protege la inversión actual; los ahorros se miden en dm evitados, horas y energía por pallet.
 
-> *Frase para los jueces:* "Esto no vende una máquina: vende **horas-hombre liberadas, más metros por hora de flota y menos energía por pallet**, todo medido en vivo."
+> *Frase para los jueces:* "Esto no vende una máquina: vende **productividad, seguridad y eficiencia** medidas — más metros por hora de flota, menos riesgo operativo y menos energía por pallet."
 
 ---
 
-## 3:40 – 4:10 · 5) SOSTENIBILIDAD — USO EFICIENTE DE RECURSOS
+## 3:35 – 4:05 · 5) SOSTENIBILIDAD — USO EFICIENTE DE RECURSOS
 
 > *(Tono pausado, alineado con el compromiso Net Zero de Nestlé.)*
 
@@ -113,7 +120,7 @@ Los costos ocultos no son las máquinas: son **las esperas, los viajes en vacío
 
 ---
 
-## 4:10 – 4:40 · 6) ESCALABILIDAD Y REPLICABILIDAD A OTROS CENTROS
+## 4:05 – 4:35 · 6) ESCALABILIDAD Y REPLICABILIDAD A OTROS CENTROS
 
 > *(Mirada amplia, movimiento hacia adelante.)*
 
@@ -127,7 +134,7 @@ Los costos ocultos no son las máquinas: son **las esperas, los viajes en vacío
 
 ---
 
-## 4:40 – 5:00 · CIERRE
+## 4:35 – 5:00 · CIERRE
 
 > *(Sube el tono, mirada a los jueces.)*
 
