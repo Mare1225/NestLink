@@ -16,6 +16,7 @@ PLANT_CONFIGS = {
         "map_file": "plant_layout.json",
         "seed_file": "seed.json"
     },
+    "realistic": {"id": "realistic", "nombre": "Planta Realistic", "map_file": "realistic.json", "seed_file": "seed_realistic.json"},
     "cd_guayaquil": {
         "id": "cd_guayaquil",
         "nombre": "CD Guayaquil",
