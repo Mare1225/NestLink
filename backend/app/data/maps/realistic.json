@@ -539,31 +539,17 @@
     },
     {
       "id": "OUT_3",
-      "x": 530,
-      "y": 380,
+      "x": 620,
+      "y": 200,
       "type": "almacen",
       "label": "OUT 3"
     },
     {
       "id": "OUT_4",
-      "x": 530,
-      "y": 470,
+      "x": 620,
+      "y": 290,
       "type": "almacen",
       "label": "OUT 4"
-    },
-    {
-      "id": "P_OUT1",
-      "x": 530,
-      "y": 520,
-      "type": "cruce",
-      "label": ""
-    },
-    {
-      "id": "P_OUT2",
-      "x": 530,
-      "y": 556,
-      "type": "cruce",
-      "label": ""
     },
     {
       "id": "MURO_ENTREGA",
@@ -1320,6 +1306,24 @@
       "entrega": true
     },
     {
+      "from": "OUT",
+      "to": "OUT_3",
+      "length": 10,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
+      "from": "OUT_2",
+      "to": "OUT_4",
+      "length": 10,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
       "from": "OUT_2",
       "to": "MURO_ENTREGA",
       "length": 14,
@@ -1344,33 +1348,6 @@
       "max_speed": 1.5,
       "direction": "bi",
       "blocked": false
-    },
-    {
-      "from": "OUT_4",
-      "to": "P_OUT1",
-      "length": 8,
-      "max_speed": 1.5,
-      "direction": "bi",
-      "blocked": false,
-      "entrega": true
-    },
-    {
-      "from": "P_OUT1",
-      "to": "P_OUT2",
-      "length": 6,
-      "max_speed": 1.5,
-      "direction": "bi",
-      "blocked": false,
-      "entrega": true
-    },
-    {
-      "from": "P_OUT2",
-      "to": "MURO_ENTREGA",
-      "length": 4,
-      "max_speed": 1.5,
-      "direction": "bi",
-      "blocked": false,
-      "entrega": true
     }
   ],
   "zones": [
@@ -1402,8 +1379,8 @@
       "label": "OUT (medio)",
       "x": 480,
       "y": 100,
-      "w": 100,
-      "h": 280,
+      "w": 160,
+      "h": 210,
       "color": "#fef9c3"
     }
   ],
