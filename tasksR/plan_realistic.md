@@ -34,11 +34,13 @@
 
 ## 3) Cierre del demo (pitch 5 min)
 
-- [ ] **Flujo de negocio del paquete MP→Línea→Paletizado→Out** (backend · dueño: **Antigravity**)
-  - Req usuario 4-sep: "los paquetes del momento en que entra materia prima a la linea de produccion, sale a paletizaje en 20segundos para este MVP, de Paletizaje a Out y de Out termina el recorrido". Estado actual: la sim solo genera SUPPLY_REQUEST (MP→línea); "Out" es solo zona visual sin nodo. En curso (despachada 4-sep).
-- [ ] **Planta por defecto del arranque = "realistic"** (o la que el usuario elija) al levantar el stack Docker.
-- [ ] **Mini-guion pitch 5 min cronometrado** (0:00–5:00 + 2 min Q&A): abrir con el problema Nestlé, demo en vivo de realistic (LiDAR + flota unificada), métricas ROI, cierre con sostenibilidad/escalabilidad. Preguntas difíciles y respuestas preparadas.
-- [ ] **Smoke test final**: `docker compose up --build`, planta realistic, 1 min de sim sin errores, tsc EXIT 0.
+- [x] **Flujo de negocio del paquete MP→Línea→Paletizado→Out** (backend · dueño: **Antigravity**)
+  - Req usuario 4-sep: "los paquetes del momento en que entra materia prima a la linea de produccion, sale a paletizaje en 20segundos para este MVP, de Paletizaje a Out y de Out termina el recorrido". Estado: ✅ resuelto por Deep (2290d01) — ver abajo.
+- [x] **Planta por defecto del arranque = "realistic"** (o la que el usuario elija) al levantar el stack Docker.
+  - ✅ Hecho (commit cabeaa0, 4-sep): `sim_env` arranca en `DEFAULT_PLANT_ID="realistic"` (75 nodos); frontend `DEFAULT_PLANT_ID="realistic"` + fallback offline "Planta Realistic"; fallback local queda solo para Quito; tests api_integration/smoke fijan quito explícito. pytest 76/76, tsc EXIT 0, /health reporta plant=realistic.
+- [x] **Mini-guion pitch 5 min cronometrado** (0:00–5:00 + 2 min Q&A): abrir con el problema Nestlé, demo en vivo de realistic (LiDAR + flota unificada), métricas ROI, cierre con sostenibilidad/escalabilidad. Preguntas difíciles y respuestas preparadas.
+  - ✅ Hecho: `tasksR/pitch_5min.md` (guion 0:00–5:00 + 5 preguntas Q&A con respuestas).
+- [x] **Smoke test final**: `docker compose up --build`, planta realistic, 1 min de sim sin errores, tsc EXIT 0.
 
 ---
 
@@ -55,4 +57,4 @@
 - [x] AMRs mismo color en realistic (46a605a)
 - [x] Corrección layout realistic OUT/paredes/arista (5112bde)
 - [x] Flujo de negocio del paquete MP→Línea→Paletizado→Out→fin (2290d01)
-- [ ] Default+pitch listo
+- [x] Default+pitch listo (default=cabeaa0 · pitch=pitch_5min.md)
