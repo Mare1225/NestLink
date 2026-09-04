@@ -19,7 +19,8 @@ export const BACKEND_TIMEOUT_MS = 3000;
 
 export const LAYOUT_FALLBACK_PATH = "/maps/plant_layout.json";
 
-export const DEFAULT_PLANT_ID = "quito";
+export const DEFAULT_PLANT_ID = "realistic";
+export const DEFAULT_PLANT_NAME = "Planta Realistic";
 
 export const CANVAS_W = 800;
 export const CANVAS_H = 500;

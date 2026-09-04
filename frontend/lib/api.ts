@@ -2,6 +2,7 @@ import {
   API_BASE,
   BACKEND_TIMEOUT_MS,
   DEFAULT_PLANT_ID,
+  DEFAULT_PLANT_NAME,
   LAYOUT_FALLBACK_PATH,
 } from "./config";
 import type { Mission, PlantInfo, PlantLayout, SimulationSnapshot } from "./types";
@@ -44,8 +45,9 @@ export async function fetchLayout(plantId?: string): Promise<PlantLayout> {
     // caer al fallback local solo para planta default
   }
 
-  // 2) Fallback local — solo planta por defecto
-  if (plant === DEFAULT_PLANT_ID || plant === "quito") {
+  // 2) Fallback local — solo aplica a la planta clásica Quito
+  //    (/maps/plant_layout.json es el mapa de Quito; realistic solo existe via backend)
+  if (plant === "quito") {
     try {
       const local = await fetchWithTimeout(LAYOUT_FALLBACK_PATH, {}, 3000);
       if (local.ok) return (await local.json()) as PlantLayout;
@@ -78,8 +80,8 @@ export async function fetchPlants(): Promise<PlantInfo[]> {
   return [
     {
       id: DEFAULT_PLANT_ID,
-      nombre: "Quito",
-      layout_url: LAYOUT_FALLBACK_PATH,
+      nombre: DEFAULT_PLANT_NAME,
+      layout_url: "",
     },
   ];
 }

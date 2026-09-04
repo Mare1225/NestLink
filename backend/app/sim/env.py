@@ -6,7 +6,7 @@ import math
 import random
 from typing import List, Dict, Any, Optional
 from app.models import SimulationSnapshot, NoticeItem
-from app.data_maps import load_layout_raw, load_seeds_raw, build_plant_graph, PLANT_CONFIGS
+from app.data_maps import load_layout_raw, load_seeds_raw, build_plant_graph, PLANT_CONFIGS, DEFAULT_PLANT_ID
 from app.metrics import KPIManager
 from app.sim.routing import block_edge, unblock_edge, find_shortest_path
 from app.sim.assignment import MissionQueue, compute_hungarian_assignment
@@ -19,7 +19,7 @@ from app.sim.bridge import ConnectionManager
 class SimulationEnvironment:
     FREEZE_TIMEOUT_S: float = 90.0
 
-    def __init__(self, plant_id: str = "quito"):
+    def __init__(self, plant_id: str = DEFAULT_PLANT_ID):
         self.plant_id = plant_id
         self.SIM_SPEED_FACTOR: float = 4.0
         self.TICK_INTERVAL_SEC: float = 0.2  # 5 Hz
@@ -527,4 +527,4 @@ class SimulationEnvironment:
             notices=self.notices
         )
 
-sim_env = SimulationEnvironment("quito")
+sim_env = SimulationEnvironment()

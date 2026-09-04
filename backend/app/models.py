@@ -4,6 +4,8 @@
 from typing import List, Tuple, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
+from app.data_maps import DEFAULT_PLANT_ID
+
 # --- Enumeraciones del Contrato ---
 EstadoAMR = Literal[
     "IDLE",
@@ -76,7 +78,7 @@ class KPIsState(BaseModel):
 class SimulationSnapshot(BaseModel):
     sim_time: float
     tick_id: int
-    plant: str = "quito"
+    plant: str = DEFAULT_PLANT_ID
     amrs: List[AMRState]
     lines: List[LineaState]
     obstacles: List[ObstaculoState]

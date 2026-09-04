@@ -11,8 +11,10 @@ from app.sim.agents import AMRAgent
 class TestNestLinkSmoke(unittest.TestCase):
 
     def setUp(self):
-        self.layout_raw = load_layout_raw()
-        self.seeds_raw = load_seeds_raw()
+        # Smoke tests del grafo canónico Quito (24 nodos). El stack arranca por
+        # defecto en "realistic" (75 nodos), así que fijamos la planta explícitamente.
+        self.layout_raw = load_layout_raw("quito")
+        self.seeds_raw = load_seeds_raw("quito")
         self.G, self.node_positions = build_plant_graph(self.layout_raw)
 
     def test_01_graph_connected(self):

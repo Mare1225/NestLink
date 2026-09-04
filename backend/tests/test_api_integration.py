@@ -6,6 +6,9 @@ from app.sim.env import sim_env
 
 class TestAPIIntegration(unittest.TestCase):
     def setUp(self):
+        # El stack arranca por defecto en "realistic"; esta suite valida endpoints
+        # sobre la planta clásica Quito, así que la fijamos explícitamente.
+        sim_env.select_plant("quito")
         self.client = TestClient(app)
 
     def test_01_health(self):

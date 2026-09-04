@@ -9,6 +9,9 @@ from typing import Dict, Any, Tuple
 MAPS_DIR = os.path.join(os.path.dirname(__file__), "data", "maps")
 SEEDS_DIR = os.path.join(os.path.dirname(__file__), "data", "seeds")
 
+# Planta por defecto del demo (realistic = mapa Nestlé con LiDAR + AMRs rojos)
+DEFAULT_PLANT_ID: str = "realistic"
+
 PLANT_CONFIGS = {
     "quito": {
         "id": "quito",
@@ -25,14 +28,14 @@ PLANT_CONFIGS = {
     }
 }
 
-def load_layout_raw(plant_id: str = "quito") -> Dict[str, Any]:
-    cfg = PLANT_CONFIGS.get(plant_id, PLANT_CONFIGS["quito"])
+def load_layout_raw(plant_id: str = DEFAULT_PLANT_ID) -> Dict[str, Any]:
+    cfg = PLANT_CONFIGS.get(plant_id, PLANT_CONFIGS[DEFAULT_PLANT_ID])
     file_path = os.path.join(MAPS_DIR, cfg["map_file"])
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def load_seeds_raw(plant_id: str = "quito") -> Dict[str, Any]:
-    cfg = PLANT_CONFIGS.get(plant_id, PLANT_CONFIGS["quito"])
+def load_seeds_raw(plant_id: str = DEFAULT_PLANT_ID) -> Dict[str, Any]:
+    cfg = PLANT_CONFIGS.get(plant_id, PLANT_CONFIGS[DEFAULT_PLANT_ID])
     file_path = os.path.join(SEEDS_DIR, cfg["seed_file"])
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)

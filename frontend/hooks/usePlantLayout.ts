@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_PLANT_ID } from "@/lib/config";
+import { DEFAULT_PLANT_ID, DEFAULT_PLANT_NAME } from "@/lib/config";
 import { fetchLayout, fetchPlants, selectPlant } from "@/lib/api";
 import type { PlantInfo, PlantLayout } from "@/lib/types";
 
@@ -15,7 +15,7 @@ export function usePlantLayout() {
 
   useEffect(() => {
     fetchPlants().then(setPlants).catch(() => {
-      setPlants([{ id: DEFAULT_PLANT_ID, nombre: "Quito" }]);
+      setPlants([{ id: DEFAULT_PLANT_ID, nombre: DEFAULT_PLANT_NAME }]);
     });
   }, []);
 
