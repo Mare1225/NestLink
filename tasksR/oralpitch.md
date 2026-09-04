@@ -1,4 +1,4 @@
-# Oral Pitch — Guion slide a slide (11 slides + Q&A oratoria)
+# Oral Pitch — Guion slide a slide (12 slides + Q&A oratoria)
 
 Guion hablado para la demo del **Hackathon InnoLabs Nestlé** · 4-sep-2026.
 Cada bloque es lo que se espera **decir** en su slide del deck `tasksR/pitch_deck/index.html`.
@@ -60,7 +60,16 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-## Slide 7 · Eje 5 · Sostenibilidad
+## Slide 7 · Inversión y retorno
+
+**Qué se ve:** Inversión ≈ US$ 0,95 M (6× MiR1200 + Fleet + cargadores + transferencia + integración) · beneficios ≈ US$ 0,20 M/año · "Así se cubre la inversión" · payback ≈ 4,5 años.
+
+**Qué decimos:**
+"Y el costo, con honestidad. Implementar la flota hoy cuesta alrededor de 950 mil dólares: seis MiR1200, el software de flota, los cargadores, los acoples de transferencia y su integración a la línea. Pero la flota se paga sola. Al año ahorramos cerca de 200 mil dólares: horas de operario liberadas de las tareas de montacargas, kilómetros y energía que evitamos recorrer, menos mermas por paradas innecesarias y cero incidentes. Si dividimos la inversión entre el ahorro anual, la recuperamos en torno a cuatro años y medio — y en un escenario de tres turnos con mano de obra cara, en la mitad del tiempo. Hay que invertir, pero cada pallet movido devuelve parte de esa inversión, hasta que la flota se paga y empieza a producir."
+
+---
+
+## Slide 8 · Eje 5 · Sostenibilidad
 
 **Qué se ve:** Net Zero / uso eficiente de recursos + aportes medibles (paradas, energía, papel).
 
@@ -69,7 +78,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-## Slide 8 · Eje 6 · Escalabilidad
+## Slide 9 · Eje 6 · Escalabilidad
 
 **Qué se ve:** Demostrable hoy (4-6 robots) → operación completa (10-15) → multi-centro; mapa de centro + KPI por réplica.
 
@@ -78,7 +87,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-## Slide 9 · Cierre
+## Slide 10 · Cierre
 
 **Qué se ve:** Demo en pantalla + mensaje final (problema, solución, diferencial).
 
@@ -98,7 +107,7 @@ Las preguntas se responden sin support visual: se deja la lámina de Cierre (o l
 
 ---
 
-## Slide 10 · Apéndice A · Origen de los KPIs
+## Slide 11 · Apéndice A · Origen de los KPIs
 
 **Qué se ve:** Tabla KPI → fórmula → fuente (viajes, tiempos de entrega, paradas evitadas, km evitados, tiempo en OUT, ROI).
 
@@ -107,7 +116,7 @@ Las preguntas se responden sin support visual: se deja la lámina de Cierre (o l
 
 ---
 
-## Slide 11 · Apéndice B · Comparativa con modelo humano
+## Slide 12 · Apéndice B · Comparativa con modelo humano
 
 **Qué se ve:** Tabla humano/montacargas vs NestLink (exactitud, robustez, personas, escalabilidad) + ahorro por viaje.
 
@@ -117,4 +126,4 @@ Las preguntas se responden sin support visual: se deja la lámina de Cierre (o l
 
 ---
 
-*Notas: deck `index.html` = 11 slides (la Q&A vive solo en este guion, sin slide), sin timings ni notas de orador en las slides. Este guion es el complemento hablado.*
+*Notas: deck `index.html` = 12 slides (la Q&A vive solo en este guion, sin slide), sin timings ni notas de orador en las slides. Este guion es el complemento hablado.*
