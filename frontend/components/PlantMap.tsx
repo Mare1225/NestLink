@@ -89,6 +89,8 @@ interface PlantMapProps {
   lidarMode?: boolean;
   /** Tiempo de simulación (s) — pulso LiDAR determinista */
   simTime?: number;
+  /** Paquetes esperando en OUTs (id nodo → cantidad) → emoji 📦 en la ruta rosada */
+  outStock?: Record<string, number>;
 }
 
 export function PlantMap({
@@ -104,6 +106,7 @@ export function PlantMap({
   plantId,
   lidarMode = false,
   simTime = 0,
+  outStock,
 }: PlantMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ scale: 1, offsetX: 0, offsetY: 0 });
@@ -362,6 +365,11 @@ export function PlantMap({
         ctx.strokeStyle = "#db6d28";
         ctx.lineWidth = (dense ? 0.4 : 1) * 5 * scale;
         ctx.setLineDash([]);
+      } else if (e.entrega) {
+        // Ruta rosada exclusiva de entrega al muro (OUT → pared externa)
+        ctx.strokeStyle = "rgba(236,72,153,0.95)";
+        ctx.lineWidth = (dense ? 0.6 : 1.4) * 4 * scale;
+        ctx.setLineDash([]);
       } else {
         ctx.strokeStyle = dense ? "rgba(74,144,184,0.75)" : "#4a90b8";
         ctx.lineWidth = (dense ? 0.4 : 1) * 3 * scale;
@@ -521,6 +529,24 @@ export function PlantMap({
         // Nodo problemático — no tumbar el rAF
       }
     });
+
+    // Ronda 15: emoji 📦 sobre cada OUT con paquete terminado esperando la entrega exclusiva al muro
+    if (outStock) {
+      layout.nodes.forEach((n) => {
+        if (/^OUT/.test(n.id) && (outStock[n.id] || 0) > 0) {
+          const s = toScreen(n.x, n.y);
+          const fs = (dense ? 13 : 17) * scale;
+          const ly = s.y - (dense ? 24 : 32) * scale;
+          ctx.font = `${fs}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.strokeStyle = "rgba(255,255,255,0.9)";
+          ctx.lineWidth = 3.5;
+          ctx.strokeText("📦", s.x, ly);
+          ctx.fillText("📦", s.x, ly);
+        }
+      });
+    }
 
     obstacles
       .filter((o) => o.tipo === "OPERATOR")
@@ -728,7 +754,7 @@ export function PlantMap({
         // Saltar AMR problemático; el resto sigue visible
       }
     });
-  }, [layout, amrs, missions, obstacles, spillMode, selectedEdge, getBlockedEdges, plantId, lidarMode, simTime]);
+  }, [layout, amrs, missions, obstacles, spillMode, selectedEdge, getBlockedEdges, plantId, lidarMode, simTime, outStock]);
 
   useEffect(() => {
     resize();

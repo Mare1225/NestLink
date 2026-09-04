@@ -53,6 +53,13 @@ class SimulationEnvironment:
         # Mapeo de tipos de nodo {id: type} (linea, empacadora, almacen, cruce, carga)
         self.node_types = {n["id"]: n.get("type", "cruce") for n in self.layout_raw.get("nodes", [])}
 
+        # Nodos de expedición (OUT*) → buffer de producto terminado; nodo de entrega al muro externo
+        self.out_nodes: List[str] = sorted(nid for nid in self.node_positions if nid.startswith("OUT"))
+        self.wall_node: Optional[str] = next((nid for nid in self.node_positions
+                                              if nid in ("MURO_ENTREGA", "ENTREGA_MURO", "WALL_DOCK")), None)
+        self.out_stock: Dict[str, int] = {out: 0 for out in self.out_nodes}
+        self.delivery_amr_id: Optional[str] = None
+
         self.metrics = KPIManager()
         self.mission_queue = MissionQueue()
         self.obstacle_manager = ObstacleManager(self.layout_raw, self.node_positions)
@@ -71,7 +78,11 @@ class SimulationEnvironment:
 
         for amr_data in self.seeds_raw.get("amrs", []):
             aid = amr_data["id"]
+            if amr_data.get("entrega_exclusiva") or amr_data.get("tipo") == "delivery" or (self.wall_node and aid == "AMR_06"):
+                self.delivery_amr_id = aid
             hz = amr_data.get("home_zone", home_zones_map.get(aid))
+            if not hz and aid == self.delivery_amr_id:
+                hz = self.wall_node
             self.amrs.append(
                 AMRAgent(
                     id_str=aid,
@@ -128,16 +139,19 @@ class SimulationEnvironment:
 
             # 2. Reubicación preventiva para AMRs ociosos (umbral reducido a 2.0s para flujo continuo)
             for amr in self.amrs:
-                if amr.estado == "IDLE" and amr.idle_timer > 2.0:
+                if amr.estado == "IDLE" and amr.idle_timer > 2.0 and amr.id != self.delivery_amr_id:
                     is_on_operational_node = self.node_types.get(amr.posicion_nodo) in ["linea", "empacadora", "almacen"]
                     target_hub = amr.home_zone if (amr.home_zone and self.node_types.get(amr.home_zone) not in ["linea", "empacadora", "almacen"]) else ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
                     if amr.posicion_nodo != target_hub or is_on_operational_node:
                         self.mission_queue.add_mission("RELOCATION", amr.posicion_nodo, target_hub, prioridad=2, sim_time=self.sim_time)
                         amr.idle_timer = 0.0
 
-            # 3. Asignación Húngara con validación de ruta
-            idle_amrs = [a for a in self.amrs if a.estado == "IDLE"]
-            pending_missions = self.mission_queue.get_pending_missions()
+            # 3. Entrega exclusiva al muro (EXPORT): solo el AMR designado, solo si hay stock en OUT
+            self._dispatch_exports()
+
+            # 3b. Asignación Húngara con validación de ruta (EXPORT fuera del pool; AMR exclusivo reservado)
+            idle_amrs = [a for a in self.amrs if a.estado == "IDLE" and a.id != self.delivery_amr_id]
+            pending_missions = [m for m in self.mission_queue.get_pending_missions() if m.tipo != "EXPORT"]
             if idle_amrs and pending_missions:
                 assignments = compute_hungarian_assignment(idle_amrs, pending_missions, self.node_positions)
                 for amr, mission in assignments:
@@ -267,15 +281,18 @@ class SimulationEnvironment:
         self._auto_recharge_check()
 
         for amr in self.amrs:
-            if amr.estado == "IDLE" and amr.idle_timer > 2.0:
+            if amr.estado == "IDLE" and amr.idle_timer > 2.0 and amr.id != self.delivery_amr_id:
                 is_on_operational_node = self.node_types.get(amr.posicion_nodo) in ["linea", "empacadora", "almacen"]
                 target_hub = amr.home_zone if (amr.home_zone and self.node_types.get(amr.home_zone) not in ["linea", "empacadora", "almacen"]) else ("X_02" if "X_02" in self.node_positions else list(self.node_positions.keys())[0])
                 if amr.posicion_nodo != target_hub or is_on_operational_node:
                     self.mission_queue.add_mission("RELOCATION", amr.posicion_nodo, target_hub, prioridad=2, sim_time=self.sim_time)
                     amr.idle_timer = 0.0
 
-        idle_amrs = [a for a in self.amrs if a.estado == "IDLE"]
-        pending_missions = self.mission_queue.get_pending_missions()
+        # Entrega exclusiva al muro (EXPORT): solo el AMR designado, solo si hay stock en OUT
+        self._dispatch_exports()
+
+        idle_amrs = [a for a in self.amrs if a.estado == "IDLE" and a.id != self.delivery_amr_id]
+        pending_missions = [m for m in self.mission_queue.get_pending_missions() if m.tipo != "EXPORT"]
         if idle_amrs and pending_missions:
             assignments = compute_hungarian_assignment(idle_amrs, pending_missions, self.node_positions)
             for amr, mission in assignments:
@@ -425,6 +442,35 @@ class SimulationEnvironment:
             ):
                 self.trigger_low_battery(amr.id)
 
+    def _dispatch_exports(self) -> None:
+        """Entrega EXCLUSIVA al muro externo (ruta rosada): solo el AMR designado (delivery_amr_id)
+        ejecuta misiones EXPORT, y solo existe una si hay stock (paquete terminado) en algún OUT."""
+        if not self.delivery_amr_id or not self.wall_node or not self.out_nodes:
+            return
+        amr = next((a for a in self.amrs if a.id == self.delivery_amr_id), None)
+        if not amr or amr.estado != "IDLE":
+            return
+        for m in self.mission_queue.get_pending_missions():
+            if m.tipo != "EXPORT":
+                continue
+            if amr.assign_mission(m, self.G, env=self):
+                # Nota informativa; el emoji se apagará cuando el AMR recoja (LOADING en OUT)
+                return
+        return
+
+    def pick_best_out(self, from_node: Optional[str] = None) -> str:
+        """Elige el OUT con menos paquetes esperando (balance de carga); desempata por ruta más corta."""
+        if not self.out_nodes:
+            return "OUT"
+        def score(out: str):
+            stock = self.out_stock.get(out, 0)
+            dist = 0
+            if from_node and from_node != out:
+                path = find_shortest_path(self.G, from_node, out, self.node_positions)
+                dist = len(path) if path else 10 ** 9
+            return (stock, dist, out)
+        return min(self.out_nodes, key=score)
+
     def reset_missions(self) -> Dict[str, Any]:
         cleared_count = len(self.mission_queue.missions)
         self.mission_queue.missions = []
@@ -524,7 +570,8 @@ class SimulationEnvironment:
             lines=self.generator.get_snapshot(),
             obstacles=self.obstacle_manager.get_snapshot(),
             kpis=self.metrics.get_snapshot(),
-            notices=self.notices
+            notices=self.notices,
+            out_stock=dict(self.out_stock)
         )
 
 sim_env = SimulationEnvironment()

@@ -529,6 +529,48 @@
       "y": 200,
       "type": "almacen",
       "label": "OUT"
+    },
+    {
+      "id": "OUT_2",
+      "x": 530,
+      "y": 290,
+      "type": "almacen",
+      "label": "OUT 2"
+    },
+    {
+      "id": "OUT_3",
+      "x": 530,
+      "y": 380,
+      "type": "almacen",
+      "label": "OUT 3"
+    },
+    {
+      "id": "OUT_4",
+      "x": 530,
+      "y": 470,
+      "type": "almacen",
+      "label": "OUT 4"
+    },
+    {
+      "id": "P_OUT1",
+      "x": 530,
+      "y": 520,
+      "type": "cruce",
+      "label": ""
+    },
+    {
+      "id": "P_OUT2",
+      "x": 530,
+      "y": 556,
+      "type": "cruce",
+      "label": ""
+    },
+    {
+      "id": "MURO_ENTREGA",
+      "x": 530,
+      "y": 576,
+      "type": "almacen",
+      "label": "Entrega al muro"
     }
   ],
   "edges": [
@@ -1267,6 +1309,68 @@
       "max_speed": 1.5,
       "direction": "bi",
       "blocked": false
+    },
+    {
+      "from": "OUT",
+      "to": "OUT_2",
+      "length": 10,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
+      "from": "OUT_2",
+      "to": "MURO_ENTREGA",
+      "length": 14,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
+      "from": "OUT_3",
+      "to": "OUT_4",
+      "length": 10,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
+      "from": "OUT_3",
+      "to": "X_T12",
+      "length": 18,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false
+    },
+    {
+      "from": "OUT_4",
+      "to": "P_OUT1",
+      "length": 8,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
+      "from": "P_OUT1",
+      "to": "P_OUT2",
+      "length": 6,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
+    },
+    {
+      "from": "P_OUT2",
+      "to": "MURO_ENTREGA",
+      "length": 4,
+      "max_speed": 1.5,
+      "direction": "bi",
+      "blocked": false,
+      "entrega": true
     }
   ],
   "zones": [

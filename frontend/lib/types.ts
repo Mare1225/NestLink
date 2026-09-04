@@ -72,6 +72,8 @@ export interface SimulationSnapshot {
   kpis: KPIsState;
   /** Banners opcionales: en LIVE vienen como objetos Notice; en modo offline como strings */
   notices?: (string | Notice)[];
+  /** Paquetes terminados esperando la entrega exclusiva al muro (id nodo OUT → cantidad) */
+  out_stock?: Record<string, number>;
 }
 
 export interface PlantInfo {
@@ -88,7 +90,7 @@ export interface SelectedEdge {
 
 export type SpillMode = "none" | "block" | "unblock";
 
-export type TipoTarea = "SUPPLY_REQUEST" | "PICKUP_PT" | "RECHARGE" | "RELOCATION";
+export type TipoTarea = "SUPPLY_REQUEST" | "PICKUP_PT" | "RECHARGE" | "RELOCATION" | "EXPEDITION" | "EXPORT";
 export type EstadoTarea = "pendiente" | "asignada" | "en_curso" | "completada";
 
 export interface Mission {
@@ -124,6 +126,8 @@ export interface LayoutEdge {
   max_speed: number;
   direction: string;
   blocked: boolean;
+  /** Ruta exclusiva de entrega al muro (se pinta en rosa) */
+  entrega?: boolean;
 }
 
 export interface LayoutPedestrian {

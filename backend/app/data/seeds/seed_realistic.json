@@ -121,6 +121,17 @@
       "bateria_inicial": 82,
       "posicion_nodo": "X_R11",
       "home_zone": "X_R12"
+    },
+    {
+      "id": "AMR_06",
+      "nombre": "AMR 6",
+      "tipo": "pallet_lifter",
+      "velocidad_ms": 1.5,
+      "carga_kg": 480,
+      "bateria_inicial": 92,
+      "posicion_nodo": "MURO_ENTREGA",
+      "home_zone": "MURO_ENTREGA",
+      "entrega_exclusiva": true
     }
   ]
 }

@@ -24,7 +24,7 @@ TipoAMR = Literal["pallet_lifter", "towing_tug", "unit_load"]
 
 TipoObstaculo = Literal["OPERATOR", "SPILL", "BLOCK"]
 
-TipoTarea = Literal["SUPPLY_REQUEST", "PICKUP_PT", "RECHARGE", "RELOCATION", "EXPEDITION"]
+TipoTarea = Literal["SUPPLY_REQUEST", "PICKUP_PT", "RECHARGE", "RELOCATION", "EXPEDITION", "EXPORT"]
 
 EstadoTarea = Literal["pendiente", "asignada", "en_curso", "completada"]
 
@@ -84,6 +84,8 @@ class SimulationSnapshot(BaseModel):
     obstacles: List[ObstaculoState]
     kpis: KPIsState
     notices: List[NoticeItem] = [] # Retrocompatible
+    # OUTs con paquete terminado esperando la entrega exclusiva al muro (id nodo → cantidad)
+    out_stock: Dict[str, int] = {}
 
 # --- Entidades del Layout de Planta ---
 

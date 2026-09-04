@@ -277,6 +277,7 @@ export function Dashboard() {
       plantId={selectedPlantId}
       lidarMode={lidarMode}
       simTime={snapshot?.sim_time ?? 0}
+      outStock={snapshot?.out_stock}
     />
   );
 

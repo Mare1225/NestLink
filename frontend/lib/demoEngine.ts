@@ -609,6 +609,7 @@ export class DemoEngine {
       obstacles,
       kpis: { ...this.kpis },
       notices,
+      out_stock: {},
     };
   }
 }

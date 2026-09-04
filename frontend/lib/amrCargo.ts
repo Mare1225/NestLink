@@ -36,6 +36,11 @@ export function resolveAmrCargoVisual(
         return { cargoEmoji: "📦", routeColor: "#f59e0b" };
       case "PICKUP_PT":
         return { cargoEmoji: "🏭", routeColor: "#a78bfa" };
+      case "EXPEDITION":
+        return { cargoEmoji: "🏭", routeColor: "#a78bfa" };
+      case "EXPORT":
+        // Entrega EXCLUSIVA al muro (ruta rosada): el paquete ya salió del OUT (emoji apagado) y viaja a la pared
+        return { cargoEmoji: "🚛", routeColor: "#10b981" };
       case "RELOCATION":
         return { cargoEmoji: "🚚", routeColor: "#4a90b8" };
       default:
