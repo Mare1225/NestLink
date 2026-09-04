@@ -13,7 +13,7 @@
 - [x] **Branding rojo/blanco** (frontend) — hecho (commit `109f819`).
 - [x] **Huge eliminado** (backend/datos) — hecho (commit `109f819`).
 - [x] **Imagen realistic recibida** — recibida 4-sep, copiada a `backend/app/data/maps/reference/` (2 jpgs).
-- [ ] **realistic.json portado + registrado + seed** — EN CURSO (OpenCode).
-- [ ] **Ruta = LiDAR implementado** — pendiente (depende de realistic · Cursor).
-- [ ] **AMRs mismo color en realistic** — pendiente (depende de realistic · Cursor).
+- [x] **realistic.json portado + registrado + seed** — hecho (commit `30fdd60`, 4-sep). 74 nodos/90 aristas/4 zonas/3 peatones, 5 AMRs; pytest 72/72; validado en vivo.
+- [ ] **Ruta = LiDAR implementado** — EN CURSO (Cursor, task despachada 4-sep).
+- [ ] **AMRs mismo color en realistic** — EN CURSO (Cursor).
 - [ ] **Default + pitch** — pendiente.

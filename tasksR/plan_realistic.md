@@ -16,12 +16,11 @@
   - ✅ Recibido 4-sep (2 archivos). Copiados al repo para trazabilidad en `backend/app/data/maps/reference/`:
     - `realistic_grafo_nodos.jpg` (1539×1150) — el mapa con el GRAFO dibujado en ROJO.
     - `realistic_presentacion.jpg` (1518×1149) — el mapa para la presentación.
-- [ ] **Portar el dibujo → layout JSON `realistic.json`** (backend/datos · dueño: **OpenCode**)
-  - Digitalizar sobre la imagen (`realistic_grafo_nodos.jpg`): canvas W/H, nodos semánticos, pasillos uni/bi, zonas con etiquetas, líneas (con `buffer_nodes`), cargadores, puntos buffer.
-  - ⚠️ **Requisito del usuario (peatones):** el GRAFO DIBUJADO EN ROJO define por dónde camina un humano de forma ALEATORIA (peatón recorriendo nodos del grafo rojo). Además, ENTRE MATERIA PRIMA y PALETIZAJE también caminan humanos → definir rutas de peatones que crucen ese pasillo (zona entre almacén MP y paletizado/empacadoras). Incluir en realistic.json y/o seed la definición de peatones/rutas para que la simulación los modele como en las otras plantas.
-  - Reusar la mecánica de `convert_huge.py` como plantilla (aliases core `WH_MP_*`, `WH_PT_*`, `L*_OUT`, `E*_IN`; guarda de alcanzabilidad).
-- [ ] **Registrar "realistic" en `PLANT_CONFIGS`** + `seed_realistic.json` (3-4 líneas SKU Nestlé, 4-6 AMRs con `home_zone` válido — NO operativo, ver fix de waiting v2).
-- [ ] **Validación backend**: boot 180+ ticks sin errores, `select_plant("realistic")`, snapshot, `pytest` suite completa verde.
+- [x] **Portar el dibujo → layout JSON `realistic.json`** (backend/datos · dueño: **OpenCode**)
+  - ✅ Hecho (commit 30fdd60, 4-sep): canvas 1000×600, 74 nodos, 90 aristas bi (180 dirigidas), 4 zonas etiquetadas, 1 línea (L1..L2, E1..E2) con buffer_nodes + zonas MP/Out, 3 peatones, registrado en PLANT_CONFIGS.
+  - ⚠️ **Requisito de peatones del usuario cumplido:** PED_01 recorre el GRAFO ROJO de forma ALEATORIA (X_T02→X_T08→X_M04→X_R11→X_R15→X_T12); PED_02 camina ENTRE MATERIA PRIMA y PALETIZADO (WH_MP_2→X_R23→X_M06→WH_PT_1); PED_03 pasillo. Validado en vivo: 3 OPERATOR en snapshot, todos en movimiento.
+- [x] **Registrar "realistic" en `PLANT_CONFIGS`** + `seed_realistic.json` (4 líneas SKU Nestlé, 5 AMRs con `home_zone` en cruces X_* — NO operativo, ver fix de waiting v2).
+- [x] **Validación backend**: boot 180+ ticks sin errores, `select_plant("realistic")`, snapshot (5 AMRs + 3 peatones + 4 líneas), integridad de grafo (conectado, sin huérfanos), `pytest` suite completa **72/72 verde**.
 
 ## 2) Narrativa pitch: la ruta = LiDAR del AMR 🚚✨
 
@@ -48,7 +47,7 @@
 - [x] Branding rojo/blanco
 - [x] Huge eliminado
 - [x] Imagen realistic recibida
-- [ ] realistic.json portado + registrado + seed
+- [x] realistic.json portado + registrado + seed
 - [ ] Ruta = LiDAR implementado
 - [ ] AMRs mismo color en realistic
 - [ ] Default+pitch listo
