@@ -66,6 +66,12 @@ function drawDirectionArrow(
   ctx.restore();
 }
 
+/** En mapas densos solo se etiquetan los nodos de interés (almacenes/líneas clave, empacadoras, cargadores). */
+function isDenseLandmark(n: { id: string; type?: string }): boolean {
+  if (n.type === "empacadora" || n.type === "carga") return true;
+  return /^(WH_MP_\d+|WH_PT_\d+|L\d+_OUT|E\d+_IN)$/.test(n.id);
+}
+
 interface PlantMapProps {
   layout: PlantLayout;
   layoutKey: number;
@@ -209,6 +215,9 @@ export function PlantMap({
 
     // Lookup O(1) para mapas grandes (~500 nodos/aristas)
     const nodeById = new Map(layout.nodes.map((n) => [n.id, n]));
+    // Mapa denso (p.ej. Huge: 520 nodos / 459 cruces / 57 zonas) → modo compacto:
+    // cruces y slots de rack sin etiqueta, aristas finas, solo nodos clave rotulados.
+    const dense = layout.nodes.length >= 150;
 
     // Capas de fondo (zonas) — impermeable si ausente/vacío
     const zones = layout.zones;
@@ -225,7 +234,7 @@ export function PlantMap({
           const hasLabel = Boolean(zone.label && zone.label.trim());
 
           if (hasFill) {
-            const fill = colorWithAlpha(zone.color, 0.18);
+            const fill = colorWithAlpha(zone.color, dense ? 0.12 : 0.18);
             if (fill) {
               ctx.fillStyle = fill;
               ctx.fillRect(zx, zy, zw, zh);
@@ -236,21 +245,28 @@ export function PlantMap({
               ctx.fillRect(zx, zy, zw, zh);
               ctx.restore();
             }
-            const stroke = colorWithAlpha(zone.color, 0.55) ?? zone.color;
+            const stroke = colorWithAlpha(zone.color, dense ? 0.42 : 0.55) ?? zone.color;
             ctx.strokeStyle = stroke;
-            ctx.lineWidth = 1;
+            ctx.lineWidth = dense ? 0.8 : 1;
             ctx.strokeRect(zx, zy, zw, zh);
           }
 
           if (hasLabel) {
-            const fontPx = Math.max(10, Math.min(zw / 18, 48));
-            ctx.save();
-            ctx.fillStyle = colorWithAlpha(zone.color || "#1a3a4a", 0.35) ?? "rgba(26,58,74,0.35)";
-            ctx.font = `bold ${fontPx}px sans-serif`;
-            ctx.textAlign = "left";
-            ctx.textBaseline = "top";
-            ctx.fillText(zone.label, zx + 6 * scale, zy + 4 * scale);
-            ctx.restore();
+            // En mapas densos solo etiquetar zonas suficientemente grandes (evita el letrero-masa)
+            if (!dense || (zw >= 24 && zh >= 10)) {
+              const fontPx = dense
+                ? Math.max(9, Math.min(zw / 22, 28))
+                : Math.max(10, Math.min(zw / 18, 48));
+              ctx.save();
+              ctx.fillStyle =
+                colorWithAlpha(zone.color || "#1a3a4a", dense ? 0.45 : 0.35) ??
+                "rgba(26,58,74,0.45)";
+              ctx.font = `bold ${fontPx}px sans-serif`;
+              ctx.textAlign = "left";
+              ctx.textBaseline = "top";
+              ctx.fillText(zone.label, zx + 6 * scale, zy + 4 * scale);
+              ctx.restore();
+            }
           }
         } catch {
           // Zona malformada — no tumbar el rAF
@@ -275,19 +291,19 @@ export function PlantMap({
 
       if (blocked) {
         ctx.strokeStyle = "#f85149";
-        ctx.lineWidth = (isHover || isSel ? 6 : 4) * scale;
+        ctx.lineWidth = (dense ? 0.4 : 1) * (isHover || isSel ? 6 : 4) * scale;
         ctx.setLineDash([6, 4]);
       } else if (isSel) {
         ctx.strokeStyle = "#58a6ff";
-        ctx.lineWidth = 6 * scale;
+        ctx.lineWidth = (dense ? 0.4 : 1) * 6 * scale;
         ctx.setLineDash([]);
       } else if (isHover) {
         ctx.strokeStyle = "#db6d28";
-        ctx.lineWidth = 5 * scale;
+        ctx.lineWidth = (dense ? 0.4 : 1) * 5 * scale;
         ctx.setLineDash([]);
       } else {
-        ctx.strokeStyle = "#4a90b8";
-        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = dense ? "rgba(74,144,184,0.75)" : "#4a90b8";
+        ctx.lineWidth = (dense ? 0.4 : 1) * 3 * scale;
         ctx.setLineDash([]);
       }
       ctx.stroke();
@@ -320,67 +336,125 @@ export function PlantMap({
     layout.nodes.forEach((n) => {
       try {
         const s = toScreen(n.x, n.y);
-        if (n.type === "linea") {
-          ctx.fillStyle = "#2d6a4f";
-          ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
-        } else if (n.type === "empacadora") {
-          ctx.fillStyle = "#e85d04";
-          ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
-        } else if (n.type === "almacen") {
-          ctx.fillStyle = "#457b9d";
-          ctx.fillRect(s.x - 22 * scale, s.y - 16 * scale, 44 * scale, 32 * scale);
-          ctx.strokeStyle = "#a8dadc";
-          ctx.lineWidth = 1;
-          for (let i = 0; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(s.x - 18 * scale, s.y - 12 * scale + i * 10 * scale);
-            ctx.lineTo(s.x + 18 * scale, s.y - 12 * scale + i * 10 * scale);
-            ctx.stroke();
-          }
-        } else if (n.type === "carga") {
-          ctx.fillStyle = "#d29922";
+        const landmark = !dense || isDenseLandmark(n);
+
+        if (n.type === "cruce") {
+          // Cruce: punto; en mapas densos se omite la etiqueta para no saturar el plano
+          const r = dense ? 1.6 * scale : 6 * scale;
+          ctx.fillStyle = dense ? "rgba(108,142,191,0.5)" : "#6c8ebf";
           ctx.beginPath();
-          ctx.arc(s.x, s.y, 12 * scale, 0, Math.PI * 2);
+          ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = "#fff";
-          ctx.font = `${10 * scale}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.fillText("⚡", s.x, s.y + 4 * scale);
+          if (!dense) {
+            ctx.fillStyle = "#4a6a7a";
+            ctx.font = `${7 * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillText(n.id, s.x, s.y + 14 * scale);
+          }
         } else if (n.type === "buffer") {
-          const half = 3.5 * scale;
+          const half = (dense ? 2.6 : 3.5) * scale;
           ctx.fillStyle = "#e8eef2";
           ctx.fillRect(s.x - half, s.y - half, half * 2, half * 2);
           ctx.strokeStyle = "#4a5560";
           ctx.lineWidth = 1;
           ctx.strokeRect(s.x - half, s.y - half, half * 2, half * 2);
-          if (n.label) {
+          if (!dense && n.label) {
             ctx.fillStyle = "#6a7a8a";
             ctx.font = `${6 * scale}px sans-serif`;
             ctx.textAlign = "center";
             ctx.textBaseline = "alphabetic";
             ctx.fillText(n.label, s.x, s.y - half - 3 * scale);
           }
-        } else {
-          ctx.fillStyle = "#6c8ebf";
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, 6 * scale, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        } else if (!dense) {
+          // === Vista normal (plantas pequeñas): glifo grande + etiqueta ===
+          if (n.type === "linea") {
+            ctx.fillStyle = "#2d6a4f";
+            ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
+          } else if (n.type === "empacadora") {
+            ctx.fillStyle = "#e85d04";
+            ctx.fillRect(s.x - 20 * scale, s.y - 12 * scale, 40 * scale, 24 * scale);
+          } else if (n.type === "almacen") {
+            ctx.fillStyle = "#457b9d";
+            ctx.fillRect(s.x - 22 * scale, s.y - 16 * scale, 44 * scale, 32 * scale);
+            ctx.strokeStyle = "#a8dadc";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 3; i++) {
+              ctx.beginPath();
+              ctx.moveTo(s.x - 18 * scale, s.y - 12 * scale + i * 10 * scale);
+              ctx.lineTo(s.x + 18 * scale, s.y - 12 * scale + i * 10 * scale);
+              ctx.stroke();
+            }
+          } else if (n.type === "carga") {
+            ctx.fillStyle = "#d29922";
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 12 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#fff";
+            ctx.font = `${10 * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.fillText("⚡", s.x, s.y + 4 * scale);
+          } else {
+            ctx.fillStyle = "#6c8ebf";
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 6 * scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
-        if (n.type === "buffer") {
-          // label ya dibujado arriba
-        } else if (n.label && n.type !== "cruce") {
-          ctx.fillStyle = "#1a3a4a";
-          ctx.font = `bold ${9 * scale}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "alphabetic";
-          ctx.fillText(n.label, s.x, s.y - 18 * scale);
-        } else if (n.type === "cruce") {
-          ctx.fillStyle = "#4a6a7a";
-          ctx.font = `${7 * scale}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "alphabetic";
-          ctx.fillText(n.id, s.x, s.y + 14 * scale);
+          if (n.label) {
+            ctx.fillStyle = "#1a3a4a";
+            ctx.font = `bold ${9 * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillText(n.label, s.x, s.y - 18 * scale);
+          }
+        } else if (landmark) {
+          // === Vista densa: solo nodos clave, glifos compactos y etiqueta con halo ===
+          if (n.type === "linea") {
+            ctx.fillStyle = "#2d6a4f";
+            ctx.fillRect(s.x - 12 * scale, s.y - 8 * scale, 24 * scale, 16 * scale);
+          } else if (n.type === "empacadora") {
+            ctx.fillStyle = "#e85d04";
+            ctx.fillRect(s.x - 10 * scale, s.y - 7 * scale, 20 * scale, 14 * scale);
+          } else if (n.type === "almacen") {
+            ctx.fillStyle = "#457b9d";
+            ctx.fillRect(s.x - 13 * scale, s.y - 10 * scale, 26 * scale, 20 * scale);
+            ctx.strokeStyle = "rgba(168,218,220,0.9)";
+            ctx.lineWidth = 0.8;
+            for (let i = 1; i < 3; i++) {
+              ctx.beginPath();
+              ctx.moveTo(s.x - 10 * scale, s.y - 6 * scale + i * 6 * scale);
+              ctx.lineTo(s.x + 10 * scale, s.y - 6 * scale + i * 6 * scale);
+              ctx.stroke();
+            }
+          } else if (n.type === "carga") {
+            ctx.fillStyle = "#d29922";
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 8 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#fff";
+            ctx.font = `${7 * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.fillText("⚡", s.x, s.y + 2.5 * scale);
+          }
+
+          if (n.label && n.type !== "carga") {
+            const ly = s.y - (n.type === "almacen" ? 12 : 10) * scale;
+            ctx.font = `bold ${7.5 * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "alphabetic";
+            ctx.strokeStyle = "rgba(232,244,252,0.85)";
+            ctx.lineWidth = 3;
+            ctx.strokeText(n.label, s.x, ly);
+            ctx.fillStyle = "#1a3a4a";
+            ctx.fillText(n.label, s.x, ly);
+          }
+        } else {
+          // Infraestructura interna (slots de rack, puntos de línea): punto discreto sin texto
+          ctx.fillStyle = n.type === "linea" ? "rgba(45,106,79,0.7)" : "rgba(69,123,157,0.6)";
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 2.6 * scale, 0, Math.PI * 2);
+          ctx.fill();
         }
       } catch {
         // Nodo problemático — no tumbar el rAF
