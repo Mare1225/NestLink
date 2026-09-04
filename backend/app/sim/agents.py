@@ -125,16 +125,15 @@ class AMRAgent:
                         if self.tarea_actual.tipo == "PICKUP_PT" and generator_manager:
                             generator_manager.drain_line_pickup(self.tarea_actual.origen, amount_pct=50.0)
 
-                        # Ronda 15 (entrega exclusiva al muro): el AMR recoge del OUT → el paquete
-                        # sale del buffer de espera (el emoji 📦 se apaga) y viaja a la pared externa.
+                        # Ronda 15 (control de estados OUT): el AMR exclusivo recoge del OUT → el
+                        # paquete sale del buffer (emoji 📦 apagado) y viaja al muro en vuelo.
                         if (
                             self.tarea_actual.tipo == "EXPORT"
                             and env
-                            and getattr(env, "out_stock", {})
-                            and self.tarea_actual.origen in env.out_stock
+                            and getattr(env, "out_nodes", [])
+                            and self.tarea_actual.origen in env.out_nodes
                         ):
-                            env.out_stock[self.tarea_actual.origen] = max(0, env.out_stock[self.tarea_actual.origen] - 1)
-                            env.add_notice("INFO", None, f"{self.nombre} recogió paquete de {self.tarea_actual.origen} → rumbo a {self.tarea_actual.destino}")
+                            env.out_pickup(self.tarea_actual.origen, amr_name=self.nombre)
 
                         self.tarea_actual.estado = "en_curso"
                         avoid_cb = (lambda u, v: any(u == rev_v and v == rev_u for (rev_u, rev_v, exp) in env.edge_reservations)) if (env and hasattr(env, 'edge_reservations')) else None
@@ -181,62 +180,27 @@ class AMRAgent:
                             )
                             env.add_notice("INFO", None, f"Pallet de {self.tarea_actual.destino} expedido a {best_out} (buffer de entrega)")
 
-                    # Ronda 15 (entrega exclusiva al muro): al entregar EXPEDITION en un OUT,
-                    # el paquete pasa a "listo en buffer" (emoji 📦) y se encadena EXPORT (OUT → muro)
-                    # para que solo el AMR de entrega lo lleve hasta la pared externa.
+                    # Ronda 15 (control de estados OUT): al entregar EXPEDITION en un OUT,
+                    # el paquete pasa a "listo en buffer" (out_stock+1 → emoji 📦) y el control
+                    # out_arrive provisiona/encadena el EXPORT único hacia el muro.
                     if (
                         self.tarea_actual.tipo == "EXPEDITION"
                         and env
-                        and getattr(env, "out_stock", {})
-                        and self.tarea_actual.destino in env.out_stock
-                        and env.wall_node
+                        and getattr(env, "out_nodes", [])
+                        and self.tarea_actual.destino in env.out_nodes
                     ):
-                        out_id = self.tarea_actual.destino
-                        env.out_stock[out_id] += 1
-                        already_export = any(
-                            m for m in env.mission_queue.get_all_missions()
-                            if m.tipo == "EXPORT"
-                            and m.origen == out_id
-                            and m.estado in ["pendiente", "asignada", "en_curso"]
-                        )
-                        if not already_export:
-                            env.mission_queue.add_mission(
-                                tipo="EXPORT",
-                                origen=out_id,
-                                destino=env.wall_node,
-                                prioridad=7,
-                                peso_kg=480.0,
-                                sim_time=sim_time
-                            )
-                            env.add_notice("INFO", None, f"📦 Paquete terminado en {out_id} esperando recolección para muro externo")
+                        env.out_arrive(self.tarea_actual.destino, sim_time=sim_time)
 
-                    # Ronda 15: el AMR exclusivo entrega en el muro externo → paquete embarcado;
-                    # si quedan más paquetes en ese OUT, encadenar la siguiente EXPORT.
+                    # Ronda 15: el AMR exclusivo entrega en el muro externo → out_ship embarca,
+                    # descuenta la misión programada (contador, sin escaneo de cola) y si aún
+                    # queda stock esperando encadena la siguiente EXPORT.
                     if (
                         self.tarea_actual.tipo == "EXPORT"
                         and env
-                        and getattr(env, "out_stock", {})
-                        and env.wall_node
+                        and getattr(env, "out_nodes", [])
+                        and self.tarea_actual.origen in env.out_nodes
                     ):
-                        out_id = self.tarea_actual.origen
-                        env.add_notice("INFO", None, f"🚚 {self.nombre} entregó paquete de {out_id} en {env.wall_node} (pared externa, embarque)")
-                        if env.out_stock.get(out_id, 0) > 0:
-                            already_export = any(
-                                m for m in env.mission_queue.get_all_missions()
-                                if m.tipo == "EXPORT"
-                                and m.origen == out_id
-                                and m.estado in ["pendiente", "asignada", "en_curso"]
-                            )
-                            if not already_export:
-                                env.mission_queue.add_mission(
-                                    tipo="EXPORT",
-                                    origen=out_id,
-                                    destino=env.wall_node,
-                                    prioridad=7,
-                                    peso_kg=480.0,
-                                    sim_time=sim_time
-                                )
-                                env.add_notice("INFO", None, f"📦 Paquete adicional en {out_id} esperando recolección")
+                        env.out_ship(self.tarea_actual.origen, amr_name=self.nombre)
 
                     self.tarea_actual.estado = "completada"
                     duration_min = round((sim_time - self.tarea_actual.created_at_sim) / 60.0, 2)

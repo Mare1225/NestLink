@@ -58,6 +58,10 @@ class SimulationEnvironment:
         self.wall_node: Optional[str] = next((nid for nid in self.node_positions
                                               if nid in ("MURO_ENTREGA", "ENTREGA_MURO", "WALL_DOCK")), None)
         self.out_stock: Dict[str, int] = {out: 0 for out in self.out_nodes}
+        # Control de asignaciones OUT: nº de misiones EXPORT provisionadas (en ruta/al muro) por OUT.
+        # Estado/sincronización: out_stock = paquetes EN el buffer (🟡 emoji 📦);
+        # out_en_ruta = EXPORTs ya PROGRAMADAS (máx 1 extra sobre stock, encadena en out_ship).
+        self.out_en_ruta: Dict[str, int] = {out: 0 for out in self.out_nodes}
         self.delivery_amr_id: Optional[str] = None
 
         self.metrics = KPIManager()
@@ -459,17 +463,75 @@ class SimulationEnvironment:
         return
 
     def pick_best_out(self, from_node: Optional[str] = None) -> str:
-        """Elige el OUT con menos paquetes esperando (balance de carga); desempata por ruta más corta."""
+        """Elige el OUT con MENOR carga: primero menos paquetes esperando (stock), luego menos
+        entrega programada (EXPORTs en ruta + pallets EN TRANSITO vía EXPEDITION ya asignadas).
+        Robusto ante dos pallets encadenando EXPEDITION en el mismo tick (no los junta)."""
         if not self.out_nodes:
             return "OUT"
         def score(out: str):
             stock = self.out_stock.get(out, 0)
+            planned = self.out_en_ruta.get(out, 0) + sum(
+                1 for m in self.mission_queue.get_all_missions()
+                if m.tipo == "EXPEDITION" and m.destino == out
+                and m.estado in ["pendiente", "asignada", "en_curso"]
+            )
+            # dist: desempate leve (si un OUT quedara inalcanzable, penalizarlo fuerte)
             dist = 0
             if from_node and from_node != out:
                 path = find_shortest_path(self.G, from_node, out, self.node_positions)
                 dist = len(path) if path else 10 ** 9
-            return (stock, dist, out)
+            return (stock, planned, dist if dist < 10 ** 8 else 10 ** 8, out)
         return min(self.out_nodes, key=score)
+
+    def out_arrive(self, out_id: str, sim_time: float) -> None:
+        """Control de estados OUT: un paquete terminado llega al buffer (stock+1, emoji 📦).
+        SOLO si aún no hay EXPORT programada para este OUT, provisiona UNA (out_en_ruta).
+        Dos llegadas en el mismo instante suman 2 al stock pero NO duplican el EXPORT:
+        el excedente lo encadena out_ship al entregar en el muro."""
+        if out_id not in self.out_stock or not self.wall_node:
+            return
+        self.out_stock[out_id] += 1
+        if self.out_en_ruta.get(out_id, 0) == 0 and self.delivery_amr_id:
+            self.mission_queue.add_mission(
+                tipo="EXPORT",
+                origen=out_id,
+                destino=self.wall_node,
+                prioridad=7,
+                peso_kg=480.0,
+                sim_time=sim_time
+            )
+            self.out_en_ruta[out_id] += 1
+            self.add_notice("INFO", None, f"📦 Paquete terminado en {out_id} esperando recolección para muro externo")
+
+    def out_pickup(self, out_id: str, amr_name: str = "") -> None:
+        """El AMR exclusivo recoge del OUT: el paquete sale del buffer (stock−1, emoji se apaga)
+        y viaja al muro en vuelo. out_en_ruta NO cambia: esa misión sigue contando hasta entregar."""
+        if out_id not in self.out_stock:
+            return
+        self.out_stock[out_id] = max(0, self.out_stock[out_id] - 1)
+        if amr_name:
+            self.add_notice("INFO", None, f"{amr_name} recogió paquete de {out_id} → rumbo a {self.wall_node}")
+
+    def out_ship(self, out_id: str, amr_name: str = "") -> None:
+        """El AMR exclusivo entrega en el muro (pared externa): la misión EXPORT deja de contar
+        (en_ruta−1). Si aún queda stock esperando en ese OUT, encadena la siguiente EXPORT —
+        con contador explícito no hay guard falso (en curso ya no aparece como pendiente)."""
+        if out_id not in self.out_stock:
+            return
+        self.out_en_ruta[out_id] = max(0, self.out_en_ruta.get(out_id, 0) - 1)
+        self.add_notice("INFO", None, f"🚚 {amr_name or 'AMR'} entregó paquete de {out_id} en {self.wall_node} (pared externa, embarque)")
+        if self.out_stock[out_id] > 0 and self.wall_node and self.delivery_amr_id:
+            if self.out_en_ruta.get(out_id, 0) == 0:
+                self.mission_queue.add_mission(
+                    tipo="EXPORT",
+                    origen=out_id,
+                    destino=self.wall_node,
+                    prioridad=7,
+                    peso_kg=480.0,
+                    sim_time=self.sim_time
+                )
+                self.out_en_ruta[out_id] += 1
+                self.add_notice("INFO", None, f"📦 Paquete adicional en {out_id} esperando recolección")
 
     def reset_missions(self) -> Dict[str, Any]:
         cleared_count = len(self.mission_queue.missions)

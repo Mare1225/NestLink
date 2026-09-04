@@ -226,5 +226,96 @@ class TestRound13PackageBusinessFlow(unittest.TestCase):
         self.assertEqual(self.env.out_stock.get("OUT", 0), 0)
 
 
+    def test_06_dos_paquetes_mismo_out_mismo_tick_no_quedan_atrapados(self):
+        """6) Ronda 15.1 (control de estados/asignaciones OUT): dos EXPEDITION entregan en el
+        MISMO OUT en el mismo instante → out_stock=2 pero solo 1 EXPORT programado (sin duplicar
+        misiones); al entregar en el muro el control encadena el 2º EXPORT → el OUT drena a 0 y
+        NO queda ningún paquete ocupando el OUT eternamente (bug reportado por el usuario)."""
+        env = self.env
+        self.assertEqual(len(env.out_nodes), 4)
+        # (a) dos paquetes llegan al mismo OUT en el mismo instante
+        env.out_arrive("OUT", 100.0)
+        env.out_arrive("OUT", 100.0)
+        self.assertEqual(env.out_stock["OUT"], 2)
+        self.assertEqual(env.out_en_ruta["OUT"], 1)
+        exports = [m for m in env.mission_queue.get_all_missions() if m.tipo == "EXPORT" and m.origen == "OUT"]
+        self.assertEqual(len(exports), 1, "2 paquetes pero solo 1 EXPORT programado")
+
+        # (b) ciclo 1: AMR_06 en_curso recoge (stock→1) y entrega en el muro → encadena 2º EXPORT
+        exports[0].estado = "en_curso"
+        env.out_pickup("OUT")
+        self.assertEqual(env.out_stock["OUT"], 1)
+        env.out_ship("OUT")
+        exports[0].estado = "completada"  # agents.step cierra la tarea justo después de out_ship
+        self.assertEqual(env.out_en_ruta["OUT"], 1)
+        exp2 = [m for m in env.mission_queue.get_all_missions()
+                if m.tipo == "EXPORT" and m.origen == "OUT" and m.id != exports[0].id][0]
+        self.assertTrue(exp2.estado in ("pendiente", "asignada"),
+                        "El control encadena el 2º EXPORT: el paquete no queda atrapado")
+
+        # (c) ciclo 2: AMR_06 ejecuta el 2º EXPORT (recoge y entrega) → buffer vacío, 0 colgadas
+        exp2.estado = "en_curso"
+        env.out_pickup("OUT")
+        self.assertEqual(env.out_stock["OUT"], 0)
+        env.out_ship("OUT")
+        exp2.estado = "completada"  # AMR_06 termina la 2ª entrega en el muro
+        self.assertEqual(env.out_en_ruta["OUT"], 0)
+        pend2 = [m for m in env.mission_queue.get_all_missions()
+                 if m.tipo == "EXPORT" and m.estado in ("pendiente", "asignada", "en_curso")]
+        self.assertEqual(len(pend2), 0, "No queda ninguna EXPORT colgada: el OUT drena por completo")
+
+
+    def test_07_integracion_dos_amrs_mismo_out_mismo_tick_y_entrega(self):
+        """7) INTEGRACIÓN del bug reportado: dos AMRs entregan EXPEDITION al MISMO OUT en el
+        MISMO tick (vía agents.step) y el AMR_06 las entrega una a una al muro → ningún paquete
+        se queda ocupando el OUT eternamente."""
+        env = self.env
+        amrs = [a for a in env.amrs if a.id in ("AMR_01", "AMR_02")]
+        # (a) dos expediciones simultáneas al mismo OUT en el mismo instante
+        for i, amr in enumerate(amrs):
+            wh = f"WH_PT_{i + 1}"
+            amr.posicion_nodo = wh
+            amr.x, amr.y = env.node_positions[wh]
+            amr.estado = "UNLOADING"
+            amr.loading_timer = 0.05
+            amr.tarea_actual = Tarea(
+                id=f"TSK_EXP_{i}", tipo="EXPEDITION", origen=wh, destino="OUT",
+                prioridad=6, estado="en_curso", created_at_sim=10.0,
+            )
+            amr.step(dt_sim=0.1, G=env.G, obstacles=[], metrics_manager=env.metrics,
+                     generator_manager=env.generator, sim_time=10.0, env=env)
+        self.assertEqual(env.out_stock["OUT"], 2, "Ambas entregas del mismo tick se cuentan")
+        self.assertEqual(env.out_en_ruta["OUT"], 1)
+        exports = [m for m in env.mission_queue.get_all_missions()
+                   if m.tipo == "EXPORT" and m.origen == "OUT" and m.estado in ("pendiente", "asignada", "en_curso")]
+        self.assertEqual(len(exports), 1, "Solo 1 EXPORT provisionado pese a los 2 paquetes")
+
+        # (b) el AMR_06 ejecuta AMBAS entregas al muro (pickup en OUT → ship en el muro)
+        amr6 = next(a for a in env.amrs if a.id == "AMR_06")
+        for k in range(2):
+            exp = next(m for m in env.mission_queue.get_all_missions()
+                       if m.tipo == "EXPORT" and m.origen == "OUT"
+                       and m.estado in ("pendiente", "asignada"))
+            amr6.posicion_nodo = "OUT"
+            amr6.x, amr6.y = env.node_positions["OUT"]
+            amr6.estado = "LOADING"
+            amr6.loading_timer = 0.05
+            amr6.tarea_actual = exp
+            amr6.step(dt_sim=0.1, G=env.G, obstacles=[], metrics_manager=env.metrics,
+                      generator_manager=env.generator, sim_time=20.0 + k, env=env)
+            amr6.posicion_nodo = "MURO_ENTREGA"
+            amr6.x, amr6.y = env.node_positions["MURO_ENTREGA"]
+            amr6.estado = "UNLOADING"
+            amr6.loading_timer = 0.05
+            amr6.step(dt_sim=0.1, G=env.G, obstacles=[], metrics_manager=env.metrics,
+                      generator_manager=env.generator, sim_time=30.0 + k, env=env)
+
+        self.assertEqual(env.out_stock["OUT"], 0, "Buffer del OUT vacío al final")
+        self.assertEqual(env.out_en_ruta["OUT"], 0, "Sin entregas programadas colgadas")
+        pend = [m for m in env.mission_queue.get_all_missions()
+                if m.tipo == "EXPORT" and m.estado in ("pendiente", "asignada", "en_curso")]
+        self.assertEqual(len(pend), 0, "Ninguna EXPORT colgada: el OUT drena por completo")
+
+
 if __name__ == "__main__":
     unittest.main()
