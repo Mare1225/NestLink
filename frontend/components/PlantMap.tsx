@@ -83,6 +83,12 @@ interface PlantMapProps {
   onEdgeSelect: (edge: SelectedEdge | null) => void;
   /** Modo página única: fit real al viewport (sin viewScale) + pan/wheel zoom */
   interactive?: boolean;
+  /** Planta activa — realistic → flota rojo Nestlé unificado */
+  plantId?: string;
+  /** Vista LiDAR: rutas como barrido + cono de avance */
+  lidarMode?: boolean;
+  /** Tiempo de simulación (s) — pulso LiDAR determinista */
+  simTime?: number;
 }
 
 export function PlantMap({
@@ -95,6 +101,9 @@ export function PlantMap({
   selectedEdge,
   onEdgeSelect,
   interactive = false,
+  plantId,
+  lidarMode = false,
+  simTime = 0,
 }: PlantMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ scale: 1, offsetX: 0, offsetY: 0 });
@@ -505,6 +514,19 @@ export function PlantMap({
     // Rutas y AMRs — join misión por id (tarea_asignada es string) + fallback path
     const missionById = new Map(missions.map((m) => [m.id, m]));
 
+    // Leyenda LiDAR (pitch)
+    if (lidarMode) {
+      ctx.save();
+      ctx.fillStyle = "rgba(15, 23, 42, 0.72)";
+      ctx.fillRect(10, 10, 128, 22);
+      ctx.fillStyle = "#7CFFB2";
+      ctx.font = `bold ${11}px sans-serif`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("LiDAR · SLAM run", 18, 21);
+      ctx.restore();
+    }
+
     amrs.forEach((amr) => {
       try {
         if (amr.path.length < 1) return;
@@ -514,27 +536,113 @@ export function PlantMap({
           amr.estado === "MOVING_TO_DELIVERY";
         const isWaiting = amr.estado === "WAITING_OBSTACLE";
         const speed = isMoving ? 2 : isWaiting ? 0.5 : 0;
-        const dashOffset = speed ? (Date.now() * speed * 0.02) % 20 : 0;
+        // Pulso determinista con sim_time (LiDAR); Date.now solo en ruta clásica
+        const dashOffset = lidarMode
+          ? speed
+            ? (simTime * speed * 18) % 20
+            : 0
+          : speed
+            ? (Date.now() * speed * 0.02) % 20
+            : 0;
 
         const anchor = getAmrAnchor(amr, layout);
-
-        ctx.save();
-        ctx.strokeStyle = routeColor;
-        ctx.lineWidth = 2 * spriteK * scale;
-        ctx.globalAlpha = 0.55;
-        ctx.setLineDash([8, 6]);
-        ctx.lineDashOffset = -dashOffset;
         const start = toScreen(anchor.x, anchor.y);
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        amr.path.forEach((nid) => {
-          const n = layout.nodes.find((x) => x.id === nid);
-          if (!n) return;
-          const s2 = toScreen(n.x, n.y);
-          ctx.lineTo(s2.x, s2.y);
-        });
-        ctx.stroke();
-        ctx.restore();
+
+        // Dirección de avance (siguiente nodo del path o angulo)
+        let dirX = Math.cos((amr.angulo * Math.PI) / 180);
+        let dirY = Math.sin((amr.angulo * Math.PI) / 180);
+        const nextNode = nodeById.get(amr.path[0]);
+        if (nextNode) {
+          const ns = toScreen(nextNode.x, nextNode.y);
+          const dx = ns.x - start.x;
+          const dy = ns.y - start.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 1e-3) {
+            dirX = dx / len;
+            dirY = dy / len;
+          }
+        }
+        const heading = Math.atan2(dirY, dirX);
+
+        if (lidarMode) {
+          // Rastro path — glow cian LiDAR
+          const pulse = 0.45 + 0.35 * Math.sin(simTime * 5 + amr.id.length);
+          ctx.save();
+          ctx.strokeStyle = `rgba(80, 255, 180, ${0.25 + pulse * 0.25})`;
+          ctx.lineWidth = 5 * spriteK * scale;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.shadowColor = "rgba(80, 255, 180, 0.55)";
+          ctx.shadowBlur = 10 * scale;
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          amr.path.forEach((nid) => {
+            const n = nodeById.get(nid);
+            if (!n) return;
+            const s2 = toScreen(n.x, n.y);
+            ctx.lineTo(s2.x, s2.y);
+          });
+          ctx.stroke();
+
+          // Barrido punteado sobre el path
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = `rgba(180, 255, 220, ${0.55 + pulse * 0.3})`;
+          ctx.lineWidth = 1.6 * spriteK * scale;
+          ctx.setLineDash([5, 7]);
+          ctx.lineDashOffset = -dashOffset;
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Cono / spotlight en dirección de avance
+          const reach = (isMoving ? 38 : isWaiting ? 22 : 16) * spriteK * scale;
+          const spread = (Math.PI / 5) * (0.85 + 0.15 * pulse);
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.arc(start.x, start.y, reach, heading - spread, heading + spread);
+          ctx.closePath();
+          const grad = ctx.createRadialGradient(
+            start.x,
+            start.y,
+            2,
+            start.x,
+            start.y,
+            reach
+          );
+          grad.addColorStop(0, `rgba(120, 255, 200, ${0.35 + pulse * 0.2})`);
+          grad.addColorStop(0.55, `rgba(80, 255, 180, ${0.12 + pulse * 0.08})`);
+          grad.addColorStop(1, "rgba(80, 255, 180, 0)");
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // Rayo central de barrido
+          ctx.strokeStyle = `rgba(220, 255, 240, ${0.5 + pulse * 0.35})`;
+          ctx.lineWidth = 1.2 * spriteK * scale;
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(
+            start.x + Math.cos(heading) * reach,
+            start.y + Math.sin(heading) * reach
+          );
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.save();
+          ctx.strokeStyle = routeColor;
+          ctx.lineWidth = 2 * spriteK * scale;
+          ctx.globalAlpha = 0.55;
+          ctx.setLineDash([8, 6]);
+          ctx.lineDashOffset = -dashOffset;
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          amr.path.forEach((nid) => {
+            const n = nodeById.get(nid);
+            if (!n) return;
+            const s2 = toScreen(n.x, n.y);
+            ctx.lineTo(s2.x, s2.y);
+          });
+          ctx.stroke();
+          ctx.restore();
+        }
       } catch {
         // No tumbar el bucle de dibujo por un AMR con datos incompletos
       }
@@ -553,7 +661,7 @@ export function PlantMap({
         ctx.lineWidth = 3 * spriteK * scale;
         ctx.stroke();
 
-        ctx.fillStyle = getAmrColor(i);
+        ctx.fillStyle = getAmrColor(i, plantId);
         const w = 20 * spriteK * scale;
         const h = 16 * spriteK * scale;
         ctx.beginPath();
@@ -585,7 +693,7 @@ export function PlantMap({
         // Saltar AMR problemático; el resto sigue visible
       }
     });
-  }, [layout, amrs, missions, obstacles, spillMode, selectedEdge, getBlockedEdges]);
+  }, [layout, amrs, missions, obstacles, spillMode, selectedEdge, getBlockedEdges, plantId, lidarMode, simTime]);
 
   useEffect(() => {
     resize();

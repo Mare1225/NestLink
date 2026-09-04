@@ -1,6 +1,6 @@
 import type { EstadoAMR } from "./types";
 
-/** Colores de aro por estado AMR — semáforo del plan NestLink */
+/** Colores de aro por estado AMR — semáforo del plan NestLink (NO cambiar en realistic) */
 export const AMR_STATE_COLORS: Record<EstadoAMR, string> = {
   IDLE: "#8b949e",
   MOVING_TO_PICKUP: "#3fb950",
@@ -21,7 +21,11 @@ export const AMR_BODY_COLORS = [
   "#6a4c93",
 ];
 
-export function getAmrColor(index: number): string {
+/** Rojo marca Nestlé — flota unificada en planta realistic */
+export const NESTLE_FLEET_RED = "#E4032E";
+
+export function getAmrColor(index: number, plantId?: string): string {
+  if (plantId === "realistic") return NESTLE_FLEET_RED;
   return AMR_BODY_COLORS[index % AMR_BODY_COLORS.length];
 }
 

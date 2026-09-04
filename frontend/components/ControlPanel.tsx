@@ -17,6 +17,8 @@ interface ControlPanelProps {
   onAdjustMissions: (delta: number) => Promise<void>;
   offline: boolean;
   loading: boolean;
+  lidarMode?: boolean;
+  onLidarModeChange?: (on: boolean) => void;
 }
 
 export function ControlPanel({
@@ -33,6 +35,8 @@ export function ControlPanel({
   onAdjustMissions,
   offline,
   loading,
+  lidarMode = false,
+  onLidarModeChange,
 }: ControlPanelProps) {
   const [peakLineId, setPeakLineId] = useState("");
   const packingLines = lines.filter(
@@ -81,6 +85,20 @@ export function ControlPanel({
         >
           ✅ Despeje
         </button>
+
+        {onLidarModeChange && (
+          <button
+            type="button"
+            onClick={() => onLidarModeChange(!lidarMode)}
+            title="Vista LiDAR — rutas como barrido SLAM"
+            className={`nest-btn ${
+              lidarMode ? "nest-btn-primary" : "nest-btn-ghost"
+            }`}
+            aria-pressed={lidarMode}
+          >
+            {lidarMode ? "📡 LiDAR ON" : "📡 LiDAR"}
+          </button>
+        )}
 
         <span className="hidden sm:inline h-5 w-px bg-black/[0.1] mx-0.5" aria-hidden />
 

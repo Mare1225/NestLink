@@ -67,6 +67,12 @@ export function Dashboard() {
   const [fleetModalOpen, setFleetModalOpen] = useState(false);
   const [kanbanModalOpen, setKanbanModalOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [lidarMode, setLidarMode] = useState(false);
+
+  // Default ON en planta realistic (pitch LiDAR)
+  useEffect(() => {
+    setLidarMode(selectedPlantId === "realistic");
+  }, [selectedPlantId]);
 
   const sidebarNarrow =
     fleetCollapsed && linesCollapsed && kanbanCollapsed ? "72px" : "240px";
@@ -268,6 +274,9 @@ export function Dashboard() {
       selectedEdge={selectedEdge}
       onEdgeSelect={setSelectedEdge}
       interactive={fullscreen}
+      plantId={selectedPlantId}
+      lidarMode={lidarMode}
+      simTime={snapshot?.sim_time ?? 0}
     />
   );
 
@@ -339,6 +348,8 @@ export function Dashboard() {
             onAdjustMissions={handleAdjustMissions}
             offline={mode === "offline"}
             loading={actionLoading}
+            lidarMode={lidarMode}
+            onLidarModeChange={setLidarMode}
           />
           <div className="nest-panel relative flex-1 min-h-0 min-w-0 overflow-hidden shadow-nest-glow">
             {mapEl}
