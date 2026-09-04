@@ -1,4 +1,4 @@
-# Oral Pitch — Guion slide a slide (12 slides)
+# Oral Pitch — Guion slide a slide (11 slides + Q&A oratoria)
 
 Guion hablado para la demo del **Hackathon InnoLabs Nestlé** · 4-sep-2026.
 Cada bloque es lo que se espera **decir** en su slide del deck `tasksR/pitch_deck/index.html`.
@@ -87,12 +87,9 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-## Slide 10 · Q&A
+## Q&A · solo oratoria (no hay slide en el deck)
 
-**Qué se ve:** Preguntas probables + respuestas cortas.
-
-**Qué decimos:**
-(No se lee textual; son respuestas de apoyo.)
+Las preguntas se responden sin support visual: se deja la lámina de Cierre (o la demo en vivo) en pantalla. Respuestas para apoyarse:
 - *"¿Y si un robot de entrega debe cargar?"* → "La entrega se completa antes de la recarga, cero pérdidas."
 - *"¿Cómo perciben a las personas?"* → "Visión computacional + sensores: detectan al peatón y re-rutean al instante."
 - *"¿Qué pasa con su WMS?"* → "Nos integramos; no lo reemplazamos."
@@ -101,7 +98,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-## Slide 11 · Apéndice A · Origen de los KPIs
+## Slide 10 · Apéndice A · Origen de los KPIs
 
 **Qué se ve:** Tabla KPI → fórmula → fuente (viajes, tiempos de entrega, paradas evitadas, km evitados, tiempo en OUT, ROI).
 
@@ -110,7 +107,7 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-## Slide 12 · Apéndice B · Comparativa con modelo humano
+## Slide 11 · Apéndice B · Comparativa con modelo humano
 
 **Qué se ve:** Tabla humano/montacargas vs NestLink (exactitud, robustez, personas, escalabilidad) + ahorro por viaje.
 
@@ -119,4 +116,4 @@ Separamos las slides con `---`. Ritmo: frases cortas, fluido, sin tecnicismos in
 
 ---
 
-*Notas: deck `index.html` = 12 slides, sin timings ni notas de orador en las slides. Este guion es el complemento hablado.*
+*Notas: deck `index.html` = 11 slides (la Q&A vive solo en este guion, sin slide), sin timings ni notas de orador en las slides. Este guion es el complemento hablado.*
