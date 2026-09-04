@@ -16,7 +16,6 @@ PLANT_CONFIGS = {
         "map_file": "plant_layout.json",
         "seed_file": "seed.json"
     },
-    "huge": {"id":"huge","nombre":"Planta Huge","map_file":"huge.json","seed_file":"seed_huge.json"},
     "cd_guayaquil": {
         "id": "cd_guayaquil",
         "nombre": "CD Guayaquil",

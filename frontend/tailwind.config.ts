@@ -13,20 +13,20 @@ const config: Config = {
       },
       colors: {
         nest: {
-          bg: "#070a10",
-          panel: "#111820",
-          border: "rgba(255,255,255,0.07)",
-          text: "#eef2f7",
-          muted: "#8b9aad",
-          accent: "#5eb3ff",
-          warm: "#e8a54b",
-          green: "#34d399",
+          bg: "#f4f5f7",
+          panel: "#ffffff",
+          border: "rgba(15,23,42,0.08)",
+          text: "#1b1f24",
+          muted: "#6b7280",
+          accent: "#e4032e",
+          warm: "#d97706",
+          green: "#059669",
         },
       },
       boxShadow: {
         "nest-panel":
-          "0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04) inset",
-        "nest-glow": "0 0 40px rgba(94,179,255,0.08)",
+          "0 4px 20px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,23,42,0.04)",
+        "nest-glow": "0 0 28px rgba(228,3,46,0.1)",
       },
       borderRadius: {
         xl: "0.875rem",

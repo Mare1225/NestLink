@@ -35,19 +35,19 @@ export function Header({
     plants.find((p) => p.id === selectedPlantId)?.nombre ?? selectedPlantId;
 
   return (
-    <header className="relative z-20 shrink-0 border-b border-white/[0.06] bg-[#0d1219]/80 backdrop-blur-xl">
+    <header className="relative z-20 shrink-0 border-b border-black/[0.08] bg-white/90 backdrop-blur-xl">
       <div className="flex items-center justify-between gap-4 px-5 py-3 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.15] bg-gradient-to-br from-sky-400 to-red-500 shadow-nest-glow"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-nest-accent/30 bg-nest-accent shadow-nest-glow"
             aria-hidden
           >
-            <span className="text-sm font-bold tracking-tighter text-white drop-shadow-sm">NL</span>
+            <span className="text-sm font-bold tracking-tighter text-white">NL</span>
           </div>
           <div className="min-w-0">
             <div className="text-lg font-semibold tracking-tight leading-none">
               <span className="text-nest-text">Nest</span>
-              <span className="text-red-400">Link</span>
+              <span className="text-nest-accent">Link</span>
             </div>
             <div className="nest-label mt-0.5 normal-case tracking-wide text-[0.6rem]">
               Centro de operaciones intralogísticas
@@ -68,7 +68,7 @@ export function Header({
               className="nest-select min-w-[140px]"
             >
               {plants.map((p) => (
-                <option key={p.id} value={p.id} className="bg-[#111820]">
+                <option key={p.id} value={p.id} className="bg-white text-nest-text">
                   {p.nombre}
                 </option>
               ))}
@@ -81,16 +81,16 @@ export function Header({
             )}
           </div>
 
-          <div className="hidden sm:block h-6 w-px bg-white/[0.08]" aria-hidden />
+          <div className="hidden sm:block h-6 w-px bg-black/[0.1]" aria-hidden />
 
           {mode === "live" ? (
             <span className="nest-status-live">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               En vivo
             </span>
           ) : mode === "offline" ? (
             <span className="nest-status-offline">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               Demo local
             </span>
           ) : (
@@ -106,7 +106,7 @@ export function Header({
                 {formatSimTime(simTime)}
               </div>
             </div>
-            <div className="h-8 w-px bg-white/[0.08]" aria-hidden />
+            <div className="h-8 w-px bg-black/[0.1]" aria-hidden />
             <div className="text-right">
               <div className="nest-label leading-none">Flota activa</div>
               <div className="nest-kpi-value text-lg text-nest-text">{amrCount}</div>

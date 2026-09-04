@@ -233,7 +233,7 @@ export function Dashboard() {
 
   if (layoutError && !layout) {
     return (
-      <div className="p-8 text-red-400">
+      <div className="p-8 text-nest-accent">
         Error cargando layout: {layoutError}
       </div>
     );
@@ -243,7 +243,7 @@ export function Dashboard() {
     return (
       <div className="nest-shell flex h-screen flex-col items-center justify-center gap-3 text-nest-muted">
         <div
-          className="h-8 w-8 rounded-full border-2 border-white/[0.08] border-t-nest-accent animate-spin"
+          className="h-8 w-8 rounded-full border-2 border-black/[0.08] border-t-nest-accent animate-spin"
           aria-hidden
         />
         <p className="text-sm">Cargando mapa de planta…</p>
@@ -345,7 +345,7 @@ export function Dashboard() {
             <button
               type="button"
               onClick={() => setFullscreen(true)}
-              className="absolute top-2 right-2 z-10 nest-btn-ghost nest-btn px-2 py-1 text-[0.65rem] bg-[#0d1219]/80 backdrop-blur-sm"
+              className="absolute top-2 right-2 z-10 nest-btn-ghost nest-btn px-2 py-1 text-[0.65rem] bg-white/90 backdrop-blur-sm shadow-nest-panel"
               title="Abrir mapa en página única"
             >
               ⛶ Ampliar

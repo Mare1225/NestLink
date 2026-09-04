@@ -78,7 +78,7 @@ export function FleetBatteryPanel({
               <div className="mt-1 text-[0.65rem] text-nest-muted capitalize">
                 {estadoLabel(amr.estado)}
               </div>
-              <div className="mt-2 h-1.5 rounded-full bg-black/40 overflow-hidden">
+              <div className="mt-2 h-1.5 rounded-full bg-black/10 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
                   style={{
@@ -90,7 +90,7 @@ export function FleetBatteryPanel({
               <div className="mt-1 flex justify-between text-[0.65rem] text-nest-muted font-mono tabular-nums">
                 <span>{batteryEmoji(amr)} {amr.bateria}%</span>
                 {amr.tarea_asignada && (
-                  <span className="truncate ml-2 text-sky-300/80">
+                  <span className="truncate ml-2 text-nest-accent">
                     {amr.tarea_asignada}
                   </span>
                 )}

@@ -19,7 +19,7 @@ export function NoticeBanner({ notices }: NoticeBannerProps) {
   if (!notices?.length) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 border-b border-white/[0.06] bg-amber-500/[0.04] px-4 py-2">
+    <div className="flex flex-wrap gap-2 border-b border-black/[0.06] bg-amber-500/[0.04] px-4 py-2">
       {notices.map((n, i) => (
         <span
           key={noticeKey(n, i)}

@@ -1,0 +1,7 @@
+- [ ] Bug de waiting AMR en nodos forever
+- [ ] Branding rojo/blanco
+- [ ] Huge eliminado
+- [ ] Imagen realistic recibida
+- [ ] realistic.json portado + registrado + seed
+- [ ] Ruta = LiDAR implementado
+- [ ] AMRs mismo color en realistic

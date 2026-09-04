@@ -34,7 +34,7 @@ class TestRound10Requirements(unittest.TestCase):
 
     def test_02_station_occupied_redirects_to_buffer_or_waits(self):
         """PASO 1b: Estación ocupada redirige a buffer o pasa a WAITING."""
-        env = SimulationEnvironment("huge")
+        env = SimulationEnvironment("quito")
         amr1, amr2 = env.amrs[0], env.amrs[1]
         
         # AMR 1 ocupa la estación de destino L1_OUT
@@ -42,11 +42,11 @@ class TestRound10Requirements(unittest.TestCase):
         amr1.x, amr1.y = env.node_positions["L1_OUT"]
 
         # AMR 2 intenta entregar a L1_OUT
-        amr2.posicion_nodo = "wh_w_secos_0"
-        amr2.x, amr2.y = env.node_positions["wh_w_secos_0"]
-        mission = Tarea(id="T_BUF", tipo="SUPPLY_REQUEST", origen="wh_w_secos_0", destino="L1_OUT", estado="en_curso")
+        amr2.posicion_nodo = "WH_PT_1"
+        amr2.x, amr2.y = env.node_positions["WH_PT_1"]
+        mission = Tarea(id="T_BUF", tipo="SUPPLY_REQUEST", origen="WH_PT_1", destino="L1_OUT", estado="en_curso")
         amr2.tarea_actual = mission
-        amr2.path = ["wh_w_secos_0", "L1_OUT"]
+        amr2.path = ["WH_PT_1", "L1_OUT"]
         amr2.target_node_idx = 1
         amr2.estado = "MOVING_TO_DELIVERY"
 

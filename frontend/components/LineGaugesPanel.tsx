@@ -72,13 +72,13 @@ export function LineGaugesPanel({
                 </div>
                 <span
                   className={`font-mono text-sm font-semibold tabular-nums shrink-0 ${
-                    low ? "text-red-400" : "text-nest-text"
+                    low ? "text-nest-accent" : "text-nest-text"
                   }`}
                 >
                   {line.nivel_pct.toFixed(0)}%
                 </span>
               </div>
-              <div className="h-1.5 rounded-full bg-black/40 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -89,7 +89,7 @@ export function LineGaugesPanel({
                 />
               </div>
               {low && (
-                <div className="mt-1.5 text-[0.65rem] font-medium text-red-400/90">
+                <div className="mt-1.5 text-[0.65rem] font-medium text-nest-accent">
                   Stock crítico
                 </div>
               )}

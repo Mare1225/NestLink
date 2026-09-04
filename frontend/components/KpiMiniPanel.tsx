@@ -11,17 +11,17 @@ export function KpiMiniPanel({ kpis }: KpiMiniPanelProps) {
     {
       label: "Viajes",
       value: String(kpis.viajes_completados),
-      accent: "text-sky-300",
+      accent: "text-nest-accent",
     },
     {
       label: "Vacíos evit.",
       value: String(kpis.viajes_vacios_evitados),
-      accent: "text-violet-300",
+      accent: "text-[#9f1239]",
     },
     {
       label: "Paradas",
       value: String(kpis.paradas_evitadas),
-      accent: "text-amber-300",
+      accent: "text-amber-700",
     },
     {
       label: "T. medio",
@@ -31,12 +31,12 @@ export function KpiMiniPanel({ kpis }: KpiMiniPanelProps) {
     {
       label: "km evit.",
       value: kpis.km_evitados.toFixed(1),
-      accent: "text-sky-200",
+      accent: "text-[#c40026]",
     },
     {
       label: "ROI km",
       value: `−${kpis.roi_km_pct}%`,
-      accent: "text-emerald-400",
+      accent: "text-emerald-700",
       highlight: true,
     },
   ];
@@ -49,7 +49,7 @@ export function KpiMiniPanel({ kpis }: KpiMiniPanelProps) {
           <div
             key={item.label}
             className={`nest-card px-1.5 py-1.5 text-center ${
-              item.highlight ? "border-emerald-500/20 bg-emerald-500/[0.06]" : ""
+              item.highlight ? "border-emerald-600/25 bg-emerald-50" : ""
             }`}
           >
             <div

@@ -33,7 +33,7 @@ export function FloatingLinesBar({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="pointer-events-auto nest-panel flex items-center gap-2 border-white/[0.1] bg-[#0d1219]/92 px-4 py-2 shadow-nest-panel backdrop-blur-xl hover:border-white/[0.16] transition-colors"
+          className="pointer-events-auto nest-panel flex items-center gap-2 border-black/[0.1] bg-white/95 px-4 py-2 shadow-nest-panel backdrop-blur-xl hover:border-black/[0.16] transition-colors"
           title="Abrir operaciones de línea"
         >
           <span className="flex items-center gap-1" aria-hidden>
@@ -53,8 +53,8 @@ export function FloatingLinesBar({
           </span>
         </button>
       ) : (
-        <div className="pointer-events-auto nest-panel w-full max-w-4xl border-white/[0.1] bg-[#0d1219]/92 shadow-nest-panel backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-3 py-2">
+        <div className="pointer-events-auto nest-panel w-full max-w-4xl border-black/[0.1] bg-white/95 shadow-nest-panel backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-2 border-b border-black/[0.06] px-3 py-2">
             <button
               type="button"
               onClick={() => setExpanded(false)}
@@ -95,7 +95,7 @@ export function FloatingLinesBar({
                 return (
                   <li
                     key={line.id}
-                    className="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/[0.03]"
+                    className="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-black/[0.03]"
                   >
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -110,7 +110,7 @@ export function FloatingLinesBar({
                     </span>
                     <span
                       className={`font-mono text-xs font-semibold tabular-nums ${
-                        low ? "text-red-400" : "text-nest-muted"
+                        low ? "text-nest-accent" : "text-nest-muted"
                       }`}
                     >
                       {line.nivel_pct.toFixed(0)}%

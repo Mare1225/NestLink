@@ -3,25 +3,26 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --nest-bg: #070a10;
-  --nest-bg-elevated: #0d1219;
-  --nest-panel: #111820;
-  --nest-panel-raised: #161d28;
-  --nest-border: rgba(255, 255, 255, 0.07);
-  --nest-border-strong: rgba(255, 255, 255, 0.12);
-  --nest-text: #eef2f7;
-  --nest-muted: #8b9aad;
-  --nest-accent: #5eb3ff;
-  --nest-accent-warm: #e8a54b;
-  --nest-green: #34d399;
-  --nest-red: #f87171;
-  --nest-amber: #fbbf24;
+  /* Nestlé brand — Rojo #E4032E + Blanco */
+  --nest-bg: #f4f5f7;
+  --nest-bg-elevated: #ffffff;
+  --nest-panel: #ffffff;
+  --nest-panel-raised: #f0f1f4;
+  --nest-border: rgba(15, 23, 42, 0.08);
+  --nest-border-strong: rgba(15, 23, 42, 0.14);
+  --nest-text: #1b1f24;
+  --nest-muted: #6b7280;
+  --nest-accent: #e4032e;
+  --nest-accent-warm: #d97706;
+  --nest-green: #059669;
+  --nest-red: #e4032e;
+  --nest-amber: #d97706;
 
-  --nest-shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  --nest-shadow-glow: 0 0 40px rgba(94, 179, 255, 0.06);
+  --nest-shadow-panel: 0 4px 20px rgba(15, 23, 42, 0.06),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+  --nest-shadow-glow: 0 0 28px rgba(228, 3, 46, 0.08);
 }
 
 html,
@@ -36,29 +37,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ambient shell — subtle depth without noise texture */
+/* Ambient shell — soft Nestlé wash */
 .nest-shell {
   background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(94, 179, 255, 0.07), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(232, 165, 75, 0.05), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(228, 3, 46, 0.06), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 95% 100%, rgba(228, 3, 46, 0.04), transparent 50%),
     var(--nest-bg);
 }
 
 @layer components {
   .nest-panel {
-    @apply rounded-xl border border-white/[0.07] bg-[#111820]/90 shadow-nest-panel backdrop-blur-sm;
+    @apply rounded-xl border border-black/[0.08] bg-white/95 shadow-nest-panel backdrop-blur-sm;
   }
 
   .nest-panel-header {
-    @apply flex items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.02] px-3 py-2.5;
+    @apply flex items-center justify-between gap-2 border-b border-black/[0.06] bg-black/[0.02] px-3 py-2.5;
   }
 
   .nest-card {
-    @apply rounded-lg border border-white/[0.06] bg-white/[0.03] transition-colors duration-200;
+    @apply rounded-lg border border-black/[0.06] bg-black/[0.02] transition-colors duration-200;
   }
 
   .nest-card:hover {
-    @apply border-white/[0.1] bg-white/[0.05];
+    @apply border-black/[0.1] bg-black/[0.04];
   }
 
   .nest-label {
@@ -66,7 +67,7 @@ body {
   }
 
   .nest-select {
-    @apply rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-sm text-nest-text
+    @apply rounded-lg border border-black/[0.1] bg-white px-3 py-1.5 text-sm text-nest-text
       transition-colors focus:border-nest-accent/50 focus:outline-none focus:ring-2 focus:ring-nest-accent/20
       disabled:opacity-50;
   }
@@ -77,37 +78,37 @@ body {
   }
 
   .nest-btn-ghost {
-    @apply nest-btn border-white/[0.08] bg-white/[0.03] text-nest-muted hover:border-white/[0.14]
-      hover:bg-white/[0.06] hover:text-nest-text;
+    @apply nest-btn border-black/[0.1] bg-white text-nest-muted hover:border-black/[0.16]
+      hover:bg-black/[0.03] hover:text-nest-text;
   }
 
   .nest-btn-primary {
-    @apply nest-btn border-nest-accent/[0.4] bg-nest-accent/[0.15] text-sky-200 hover:bg-nest-accent/[0.25]
+    @apply nest-btn border-nest-accent/40 bg-nest-accent/[0.1] text-[#c40026] hover:bg-nest-accent/[0.18]
       hover:border-nest-accent/60;
   }
 
   .nest-btn-warm {
-    @apply nest-btn border-orange-500/[0.35] bg-orange-500/[0.12] text-orange-200 hover:bg-orange-500/20;
+    @apply nest-btn border-orange-500/35 bg-orange-500/[0.08] text-orange-800 hover:bg-orange-500/15;
   }
 
   .nest-btn-success {
-    @apply nest-btn border-emerald-500/[0.35] bg-emerald-500/[0.12] text-emerald-200 hover:bg-emerald-500/20;
+    @apply nest-btn border-emerald-600/35 bg-emerald-500/[0.08] text-emerald-800 hover:bg-emerald-500/15;
   }
 
   .nest-btn-danger {
-    @apply nest-btn border-red-500/[0.35] bg-red-500/[0.12] text-red-200 hover:bg-red-500/20;
+    @apply nest-btn border-nest-accent/40 bg-nest-accent/[0.1] text-[#c40026] hover:bg-nest-accent/20;
   }
 
   .nest-btn-warning {
-    @apply nest-btn border-amber-500/[0.35] bg-amber-500/[0.12] text-amber-200 hover:bg-amber-500/20;
+    @apply nest-btn border-amber-500/35 bg-amber-500/[0.1] text-amber-800 hover:bg-amber-500/15;
   }
 
   .nest-toolbar-group {
-    @apply flex flex-wrap items-center gap-1.5 rounded-xl border border-white/[0.07] bg-[#161d28] p-1.5;
+    @apply flex flex-wrap items-center gap-1.5 rounded-xl border border-black/[0.08] bg-[#f0f1f4] p-1.5;
   }
 
   .nest-toolbar-solid {
-    @apply flex flex-wrap items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#161d28] p-2;
+    @apply flex flex-wrap items-center gap-1.5 rounded-lg border border-black/[0.08] bg-[#f0f1f4] p-2;
   }
 
   .nest-hint {
@@ -115,21 +116,21 @@ body {
   }
 
   .nest-hint-warm {
-    @apply nest-hint border-orange-500/30 bg-orange-950/80 text-orange-100/90;
+    @apply nest-hint border-orange-400/40 bg-orange-50 text-orange-900;
   }
 
   .nest-hint-info {
-    @apply nest-hint border-sky-500/30 bg-sky-950/80 text-sky-100/90;
+    @apply nest-hint border-nest-accent/30 bg-red-50 text-[#8b001c];
   }
 
   .nest-status-live {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10
-      px-2.5 py-0.5 text-[0.7rem] font-medium text-emerald-300;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-emerald-50
+      px-2.5 py-0.5 text-[0.7rem] font-medium text-emerald-800;
   }
 
   .nest-status-offline {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10
-      px-2.5 py-0.5 text-[0.7rem] font-medium text-amber-300;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-amber-500/35 bg-amber-50
+      px-2.5 py-0.5 text-[0.7rem] font-medium text-amber-800;
   }
 
   .nest-kpi-value {

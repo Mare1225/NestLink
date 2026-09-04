@@ -82,7 +82,7 @@ export function ControlPanel({
           ✅ Despeje
         </button>
 
-        <span className="hidden sm:inline h-5 w-px bg-white/[0.1] mx-0.5" aria-hidden />
+        <span className="hidden sm:inline h-5 w-px bg-black/[0.1] mx-0.5" aria-hidden />
 
         {packingLines.length > 0 && (
           <>
@@ -93,7 +93,7 @@ export function ControlPanel({
               aria-label="Línea de producción"
             >
               {packingLines.map((l) => (
-                <option key={l.id} value={l.id} className="bg-[#111820]">
+                <option key={l.id} value={l.id} className="bg-white text-nest-text">
                   {l.nombre}
                 </option>
               ))}
@@ -130,7 +130,7 @@ export function ControlPanel({
           </>
         )}
 
-        <span className="hidden md:inline h-5 w-px bg-white/[0.1] mx-0.5" aria-hidden />
+        <span className="hidden md:inline h-5 w-px bg-black/[0.1] mx-0.5" aria-hidden />
 
         <button
           type="button"
@@ -172,7 +172,7 @@ export function ControlPanel({
           <span>Selecciona un pasillo en el mapa</span>
           {selectedEdge && (
             <>
-              <span className="font-mono text-orange-100">
+              <span className="font-mono text-orange-800">
                 {selectedEdge.from} → {selectedEdge.to}
               </span>
               <button
@@ -193,7 +193,7 @@ export function ControlPanel({
           <span>Clic en pasillo bloqueado (rojo)</span>
           {selectedEdge && (
             <>
-              <span className="font-mono text-sky-100">
+              <span className="font-mono text-nest-accent">
                 {selectedEdge.from} → {selectedEdge.to}
               </span>
               <button
