@@ -28,3 +28,9 @@
   - **BUG "los muros no existen aun"** → resuelto: nueva capa `walls` en realistic.json (W1 este del patio OUT x596 y70 w8 h320; W2 oeste x440 y70 w8 h230) + tipos `LayoutWall` y render sólido oscuro en PlantMap (entre zonas y aristas). Verificado: ninguna pared cruza una arista existente (crossings=0).
   - test_round13#test_04 actualizado (vecino de OUT ahora X_T11). Validado: pytest 76/76, tsc EXIT 0, grafo 75 nodos conexo, livedemo 45 s sin errores (7 SUPPLY + 5 PICKUP_PT + 2 EXPEDITION + 1 RELOCATION).
   - ⚠️ Nota: los muros colocados son consistentes con la topología; si la posición exacta difiere de la foto anotada del usuario, ajustar W1/W2 o añadir más en realistic.json.
+- [x] **Feedback layout ronda 2.1 — nodos B10/B20 + muros FÍSICOS + borde externo** — ✅ HECHO (commit `c20a8af`, 4-sep).
+  - Nodos nuevos de almacén **B10(760,470) ↔ X_T16** y **B20(800,470) ↔ X_T17** (docks, como indicó el usuario).
+  - **W1 movido** a (609,57,8,364) ajustando el recorrido; queda W2 (440,70,8,230).
+  - **Paredes externas (borde del perímetro)**: W_TOP (0,0,1000,8), W_BOTTOM (0,592,1000,8), W_LEFT (0,0,8,600), W_RIGHT (992,0,8,600).
+  - **BUG "los humanos atraviesan los muros"** → resuelto de raíz: `build_plant_graph` en `data_maps.py` filtra toda arista que cruce un rect de `layout.walls` (intersección segmento↔rect, pad 0.5, incluye endpoint-inside). Ni AMRs (A* por aristas) ni peatones pueden atravesar una pared. Solo plantas con `walls`; quito/guayaquil intactos.
+  - Layout final: **77 nodos / 92 aristas / 6 muros**. Test guard `test_walls.py` (ninguna pared cruza arista; conteo dinámico). **pytest 79/79**, tsc EXIT 0, ciclo misiones vivo. Si el usuario reenvía el layout original, afinar el perímetro del borde.

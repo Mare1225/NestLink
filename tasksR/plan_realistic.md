@@ -59,6 +59,15 @@
 - [x] Flujo de negocio del paquete MP→Línea→Paletizado→Out→fin (2290d01)
 - [x] Default+pitch listo (default=cabeaa0 · pitch=pitch_5min.md)
 - [x] Feedback ronda 2 (b5b377b): X_T11↔OUT (no X_M02), WH_MP_5→X_R25 solo, WH_PT_3→X_M05, y **muros VISIBLES** (bug "los muros no existen aun") — capa `walls` en realistic.json + render negro en PlantMap, sin cruzar aristas. pytest 76/76, tsc EXIT 0.
+- [x] Feedback ronda 2.1 (c20a8af): B10/B20 + muros físicos + borde externo (detalle abajo).
+
+**Feedback ronda 2.1 — cerrado (commit `c20a8af`, 4-sep)**
+- Nodos nuevos de almacén **B10**(760,470) ↔ `X_T16` y **B20**(800,470) ↔ `X_T17` (zona de docks, como indicó el usuario con la imagen).
+- **Wall W1 movido a x=609** (este del patio OUT, 8×364) ajustando el recorrido interno.
+- **Borde = paredes externas** del perímetro: `W_TOP` (0,0,1000,8), `W_BOTTOM` (0,592,1000,8), `W_LEFT` (0,0,8,600), `W_RIGHT` (992,0,8,600) — representan las paredes externas del layout original.
+- **Muros FÍSICOS (bug "humanos atraviesan los muros" resuelto):** `build_plant_graph` en `data_maps.py` filtra toda arista cuyo segmento cruce un rect de `layout.walls` (intersección segmento↔rect con pad 0.5, incluye endpoint-inside). Ningún AMR (camina por aristas de G) ni peatón (misma base) puede atravesar una pared. Solo plantas con `walls`; quito/guayaquil intactos.
+- Layout final realistic: **77 nodos / 92 aristas / 6 muros**, grafo conexo sin huérfanos.
+- Test guard `test_walls.py`: ninguna pared cruza una arista del grafo; conteo de nodos dinámico (`len(layout["nodes"])`, no hardcode). **pytest 79/79**, `npx tsc --noEmit` EXIT 0, ciclo de misiones vivo (SUPPLY/PICKUP_PT/RELOCATION) con el stack rebuild.
 
 ## Check-puntos pendientes / posibles ajustes (demo day)
-- [ ] Si el usuario ajusta la posición de los muros según su foto anotada → mover W1/W2 (o añadir más) en `realistic.json`. Por ahora 2 muros consistentes con la topología (W1 este del patio OUT x596 y70 h320; W2 oeste x440 y70 h230).
+- [ ] Si el usuario reenvía el layout original ("te lo vuelvo a pasar?") → alinear con precisión las **paredes externas del borde** (por ahora W_TOP/BOTTOM/LEFT/RIGHT = perímetro de la imagen 1000×600) y afinar posición de W1 (609,57,8,364) / W2 (440,70,8,230). Validar de nuevo 0 cruces con `test_walls.py` antes de commit.
